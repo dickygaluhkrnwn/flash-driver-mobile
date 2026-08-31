@@ -32,6 +32,15 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Izinkan aplikasi Flash Global Kurir untuk selalu mengakses lokasimu guna melacak posisi AWB meski aplikasi diminimize.",
+          "locationAlwaysLabel": "Selalu Izinkan",
+          "locationWhenInUseLabel": "Hanya Saat Digunakan",
+          "isAndroidBackgroundLocationEnabled": true
+        }
       ]
     ],
     "experiments": {

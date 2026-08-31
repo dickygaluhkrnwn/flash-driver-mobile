@@ -1,9 +1,40 @@
-:root {
-  --font-display:
-    Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
-    Segoe UI Symbol, Noto Color Emoji;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
-  --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
-  --font-serif: Georgia, 'Times New Roman', serif;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #f8fafc;
+    --background-alt: #f1f5f9;
+    --foreground: #0f172a;
+    --foreground-muted: #64748b;
+    
+    --brand-maroon: #7A171D;
+    --brand-maroon-dark: #5A0E13;
+    --brand-maroon-light: #9A242B;
+    
+    --brand-gold: #C5A059;
+    --brand-gold-dark: #A68345;
+    --brand-gold-light: #DFBE7B;
+
+    --font-display:
+      Spline Sans, Inter, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji,
+      Segoe UI Symbol, Noto Color Emoji;
+    --font-mono:
+      ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace;
+    --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
+    --font-serif: Georgia, 'Times New Roman', serif;
+  }
+}
+
+@layer utilities {
+  .glass-card {
+    background-color: rgba(255, 255, 255, 0.7);
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 1);
+  }
+
+  .text-gradient-brand {
+    color: #7A171D;
+  }
 }

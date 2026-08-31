@@ -320,53 +320,72 @@ export default function MobileWalletPage() {
   return (
     <View className="flex-1 bg-slate-50">
       
-      {/* HEADER CARD */}
-      <View className="bg-slate-900 rounded-b-[3rem] px-5 pt-12 pb-14 shadow-lg overflow-hidden relative">
-        <View className="absolute -top-10 -right-10 w-48 h-48 bg-[#C5A059] rounded-full opacity-20" style={{ filter: 'blur(40px)' }} />
-        <View className={`absolute -bottom-10 -left-10 w-32 h-32 rounded-full opacity-30 ${isVendor ? 'bg-blue-600' : 'bg-[#7a171d]'}`} style={{ filter: 'blur(30px)' }} />
+      {/* HEADER CARD (CREDIT CARD STYLE) */}
+      <View 
+        className="rounded-b-[3rem] px-6 pt-16 pb-20 overflow-hidden relative z-10"
+        style={{ elevation: 15, shadowColor: isVendor ? '#1e3a8a' : '#7a171d', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20 }}
+      >
+        <LinearGradient
+          colors={isVendor ? ['#1e3a8a', '#3b82f6'] : ['#450a0a', '#9A242B']}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+          className="absolute inset-0"
+        />
+        <View className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
+        <View className="absolute -bottom-10 -left-10 w-32 h-32 bg-black/20 rounded-full blur-xl" />
 
-        <View className="flex-row items-center justify-between mb-8 z-10">
-          <View className="flex-row items-center gap-2 bg-white/10 px-4 py-2 rounded-full border border-white/20">
+        <View className="flex-row items-center justify-between mb-8 z-10 relative">
+          <View className="flex-row items-center gap-2 bg-white/20 px-4 py-2.5 rounded-[1.25rem] border border-white/30" style={{ elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 5 }}>
             <Wallet size={16} color="#FFF" />
             <Text className="text-[10px] font-black text-white uppercase tracking-widest">Dompet Digital</Text>
           </View>
         </View>
 
-        <View className="items-center justify-center z-10">
-          <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Total Saldo Tersedia</Text>
-          <View className="flex-row items-start justify-center gap-1">
-            <Text className="text-2xl font-bold text-slate-400 mt-1">Rp</Text>
-            <Text className="text-5xl font-black text-white font-mono tracking-tighter">{balance.toLocaleString('id-ID')}</Text>
+        <View className="items-start justify-center z-10 relative">
+          <Text className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1.5">Total Saldo Tersedia</Text>
+          <View className="flex-row items-start justify-center gap-2">
+            <Text className="text-3xl font-bold text-white/70 mt-1">Rp</Text>
+            <Text className="text-5xl font-black text-white tracking-tighter">{balance.toLocaleString('id-ID')}</Text>
           </View>
 
           {partnerType === "FleetDriver" && vendorName && (
-            <View className="mt-4 flex-row items-center gap-1.5 bg-amber-900/60 border border-amber-700/50 px-4 py-2 rounded-full">
-              <ShieldAlert size={14} color="#fcd34d" />
-              <Text className="text-[10px] font-bold text-amber-200">Hak Akses PT {vendorName}</Text>
+            <View className="mt-4 flex-row items-center gap-2 bg-white/20 border border-white/30 px-4 py-2.5 rounded-[1.25rem]">
+              <ShieldAlert size={16} color="#fcd34d" />
+              <Text className="text-xs font-black text-amber-300 tracking-tight">Akses PT {vendorName}</Text>
             </View>
           )}
         </View>
       </View>
 
       {/* FLOATING ACTIONS */}
-      <View className="flex-row px-5 -mt-6 z-20 gap-4 mb-4">
+      <View className="flex-row px-6 -mt-8 z-20 gap-4 mb-4">
         <TouchableOpacity 
           onPress={() => setShowWithdrawModal(true)}
           activeOpacity={0.8}
-          className="flex-1 bg-white border border-slate-100 rounded-[1.5rem] py-4 items-center justify-center shadow-md shadow-black/5"
+          className="flex-1 bg-white border border-slate-200 rounded-[1.5rem] py-4 items-center justify-center"
+          style={{ elevation: 8, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 10 }}
         >
-          <ArrowDownCircle size={24} color={isVendor ? "#2563eb" : "#7a171d"} className="mb-2" />
-          <Text className="text-xs font-black text-slate-800 tracking-tight">Tarik Tunai</Text>
+          <View className={`w-12 h-12 rounded-[1.25rem] mb-2 items-center justify-center border ${isVendor ? 'bg-blue-50 border-blue-100' : 'bg-red-50 border-red-100'}`}>
+             <ArrowDownCircle size={24} color={isVendor ? "#2563eb" : "#7a171d"} />
+          </View>
+          <Text className="text-sm font-black text-slate-800 tracking-tight">Tarik Tunai</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
           onPress={() => setShowTopupModal(true)}
           activeOpacity={0.8}
-          className="flex-1 rounded-[1.5rem] py-4 items-center justify-center shadow-md shadow-[#C5A059]/30 border border-[#A68345]"
+          className="flex-1 rounded-[1.5rem] py-4 items-center justify-center overflow-hidden"
+          style={{ elevation: 8, shadowColor: '#C5A059', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 10 }}
         >
-          <LinearGradient colors={['#DFBE7B', '#C5A059']} className="absolute inset-0 rounded-[1.5rem]" />
-          <ArrowUpCircle size={24} color="#FFF" className="mb-2 z-10" />
-          <Text className="text-xs font-black text-white tracking-tight z-10">Isi Saldo</Text>
+          <LinearGradient 
+            colors={['#DFBE7B', '#C5A059']} 
+            start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+            className="absolute inset-0 border border-[#E2C68A]/50" 
+            style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.4)' }}
+          />
+          <View className="w-12 h-12 rounded-[1.25rem] bg-white/20 border border-white/30 items-center justify-center mb-2 z-10" style={{ elevation: 5, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5 }}>
+            <ArrowUpCircle size={24} color="#FFF" />
+          </View>
+          <Text className="text-sm font-black text-white tracking-tight z-10">Isi Saldo</Text>
         </TouchableOpacity>
       </View>
 
@@ -390,19 +409,25 @@ export default function MobileWalletPage() {
               const isIncome = log.type === "TopUp" || log.type === "Income";
 
               return (
-                <View key={log.id} className="bg-white p-4 rounded-[1.5rem] border border-slate-100 shadow-sm flex-row items-center justify-between overflow-hidden relative mb-3">
+                <View 
+                  key={log.id} 
+                  className="bg-white p-4 rounded-[1.5rem] border border-slate-100 flex-row items-center justify-between overflow-hidden relative mb-3"
+                  style={{ elevation: 2, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}
+                >
                   <View className={`absolute left-0 top-0 bottom-0 w-1.5 ${log.status === 'Disetujui' || log.status === 'Success' ? 'bg-emerald-500' : log.status === 'Ditolak' ? 'bg-red-500' : log.status === 'Processing' ? 'bg-blue-500' : 'bg-amber-400'}`} />
                   
-                  <View className="flex-1 pl-3 pr-2">
-                    <View className="flex-row items-center gap-1.5 mb-1">
-                      {isIncome ? <ArrowUpCircle size={16} color="#10b981" /> : <ArrowDownCircle size={16} color={isVendor ? "#2563eb" : "#7a171d"} />}
-                      <Text className="text-sm font-black text-slate-800 tracking-tight" numberOfLines={1}>{log.description || (isIncome ? 'Pendapatan Saldo' : 'Potongan Saldo')}</Text>
+                  <View className="flex-1 pl-3 pr-2 flex-row items-center gap-3">
+                    <View className={`w-10 h-10 rounded-xl items-center justify-center shrink-0 border ${isIncome ? 'bg-emerald-50 border-emerald-100' : isVendor ? 'bg-blue-50 border-blue-100' : 'bg-red-50 border-red-100'}`}>
+                       {isIncome ? <ArrowUpCircle size={20} color="#10b981" /> : <ArrowDownCircle size={20} color={isVendor ? "#2563eb" : "#7a171d"} />}
                     </View>
-                    <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{dateStr}</Text>
+                    <View className="flex-1">
+                      <Text className="text-sm font-black text-slate-800 tracking-tight leading-snug mb-0.5" numberOfLines={1}>{log.description || (isIncome ? 'Pendapatan Saldo' : 'Potongan Saldo')}</Text>
+                      <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{dateStr}</Text>
+                    </View>
                   </View>
                   
                   <View className="items-end gap-1.5 shrink-0">
-                    <Text className={`text-sm font-black font-mono tracking-tight ${isIncome ? 'text-emerald-600' : isVendor ? 'text-blue-600' : 'text-[#7a171d]'}`}>
+                    <Text className={`text-base font-black tracking-tight ${isIncome ? 'text-emerald-600' : isVendor ? 'text-blue-600' : 'text-[#7a171d]'}`}>
                       {isIncome ? '+' : '-'} {formatRupiah(log.amount)}
                     </Text>
                     <View className={`px-2 py-0.5 border rounded-md ${getStatusBadgeColor(log.status)}`}>

@@ -39,14 +39,15 @@ export function Header({ title, showBack = false }: HeaderProps) {
   };
 
   return (
-    <View className="w-full bg-white/90 backdrop-blur-xl pt-14 pb-4 px-4 flex-row items-center justify-between border-b border-slate-100 z-50" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+    <View className="w-full bg-white/60 backdrop-blur-3xl pt-14 pb-4 px-5 flex-row items-center justify-between border-b border-white/40 z-50">
       
       {/* KIRI: Tombol Back & Judul */}
       <View className="flex-row items-center gap-3">
         {showBack && (
           <TouchableOpacity 
             onPress={() => router.back()}
-            className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white border border-slate-100" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}
+            className="w-11 h-11 flex items-center justify-center rounded-[1.25rem] bg-white/90 border border-white/50" 
+            style={{ elevation: 5, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 }}
           >
             <ChevronLeft size={24} color="#1e293b" />
           </TouchableOpacity>
@@ -57,17 +58,21 @@ export function Header({ title, showBack = false }: HeaderProps) {
       </View>
 
       {/* KANAN: Notifikasi & Profil */}
-      <View className="flex-row items-center gap-2">
-        <TouchableOpacity className="relative w-10 h-10 flex items-center justify-center rounded-2xl bg-white border border-slate-100" style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+      <View className="flex-row items-center gap-3">
+        <TouchableOpacity 
+          className="relative w-11 h-11 flex items-center justify-center rounded-[1.25rem] bg-white/90 border border-white/50" 
+          style={{ elevation: 5, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 }}
+        >
           <Bell size={20} color="#334155" />
-          <View className={`absolute top-2 right-2.5 w-2 h-2 rounded-full border border-white ${notifColor}`} />
+          <View className={`absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full border-2 border-white ${notifColor}`} />
         </TouchableOpacity>
 
         <TouchableOpacity 
           onPress={() => setIsProfileOpen(true)}
-          className={`flex-row items-center gap-1.5 p-1 pr-2 rounded-2xl border ${isProfileOpen ? 'bg-white border-slate-200' : 'bg-white/70 border-white'}`} style={!isProfileOpen ? { elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 } : {}}
+          className="flex-row items-center gap-1.5 p-1 pr-2 rounded-[1.25rem] bg-white/90 border border-white/50" 
+          style={{ elevation: 5, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 }}
         >
-          <View className="relative w-8 h-8 rounded-xl overflow-hidden bg-slate-100 border border-slate-200">
+          <View className="relative w-9 h-9 rounded-[1rem] overflow-hidden bg-slate-100 border border-slate-200">
             {user?.photoURL ? (
               <Image source={{ uri: user.photoURL }} style={{ width: '100%', height: '100%' }} />
             ) : (

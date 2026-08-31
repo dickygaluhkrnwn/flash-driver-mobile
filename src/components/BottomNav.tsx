@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Home, Radar, Wallet, User, Truck, History } from 'lucide-react-native';
 import { useAuthStore } from '@/store/useAuthStore';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 const MAX_WIDTH = Math.min(width - 32, 400);
@@ -15,8 +16,8 @@ export function BottomNav({ state, descriptors, navigation }: BottomTabBarProps)
   const vendorMode = isVendor();
   
   // Theme gradients defined as solid background colors or gradient substitutes in RN
-  const activeBgColor = vendorMode ? 'bg-blue-600' : 'bg-[#7A171D]';
-  const radarBgColor = vendorMode ? 'bg-blue-600' : 'bg-[#9A242B]';
+  const activeGradient = vendorMode ? ['#1e40af', '#3b82f6'] : ['#450a0a', '#9A242B'];
+  const radarGradient = vendorMode ? ['#1e3a8a', '#2563eb'] : ['#5A0E13', '#7A171D'];
 
   // Map route names to icons
   const getIcon = (routeName: string, isActive: boolean) => {
@@ -89,12 +90,16 @@ export function BottomNav({ state, descriptors, navigation }: BottomTabBarProps)
                 className="relative flex items-center justify-center w-[60px] h-[60px]"
               >
                 <View 
-                  className="absolute -top-10 w-16 h-16 bg-white rounded-full flex items-center justify-center p-1.5 border-t border-white"
-                  style={{ elevation: 10, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.2, shadowRadius: 10 }}
+                  className="absolute -top-12 w-20 h-20 bg-white/20 rounded-full flex items-center justify-center border-t border-white"
+                  style={{ elevation: 20, shadowColor: vendorMode ? '#2563eb' : '#7A171D', shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.5, shadowRadius: 20, padding: 6 }}
                 >
-                  <View className={`w-full h-full rounded-full flex items-center justify-center ${radarBgColor}`}>
+                  <LinearGradient
+                    colors={radarGradient as [string, string]}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    className="w-full h-full rounded-full flex items-center justify-center border border-white/20"
+                  >
                     {getIcon(route.name, isFocused)}
-                  </View>
+                  </LinearGradient>
                 </View>
               </TouchableOpacity>
             );
@@ -108,9 +113,14 @@ export function BottomNav({ state, descriptors, navigation }: BottomTabBarProps)
               className="relative flex-1 items-center justify-center h-[60px]"
             >
               {isFocused && (
-                <View
-                  className={`absolute inset-0 rounded-[2rem] ${activeBgColor}`}
-                />
+                <View className="absolute inset-1 rounded-[2rem] overflow-hidden" style={{ elevation: 5, shadowColor: vendorMode ? '#1e40af' : '#450a0a', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5 }}>
+                  <LinearGradient 
+                    colors={activeGradient as [string, string]} 
+                    start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} 
+                    className="absolute inset-0 border border-white/20 rounded-[2rem]" 
+                    style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.3)' }}
+                  />
+                </View>
               )}
               <View className="relative z-10 flex-col items-center justify-center space-y-1">
                 {getIcon(route.name, isFocused)}

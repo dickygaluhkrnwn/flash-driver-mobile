@@ -6,6 +6,7 @@ import { db } from "@/lib/firebase";
 import { useAuthStore } from "@/store/useAuthStore";
 import { OrderDetail } from "@/types/order";
 import { CheckCircle2, Clock, Package, Truck, AlertTriangle, History } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 
 const formatRupiah = (val: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(val || 0);
 
@@ -88,27 +89,33 @@ export default function DriverOrdersPage() {
     return (
       <View 
         key={order.id} 
+        style={isActive ? {
+          elevation: 10,
+          shadowColor: '#10b981',
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.3,
+          shadowRadius: 10
+        } : {
+          elevation: 3,
+          shadowColor: '#94a3b8',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 5
+        }}
       >
         <TouchableOpacity
           activeOpacity={0.8}
           // onPress={() => router.push(`/(tabs)/awb/${order.id}`)} // Placeholder AWB
-          className={`glass-card p-4 rounded-[1.5rem] flex-col gap-3 relative overflow-hidden border ${isActive ? "border-emerald-200/50 bg-white" : "border-slate-100 bg-white"}`}
-          style={isActive ? {
-            shadowColor: '#10b981',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.1,
-            shadowRadius: 12,
-            elevation: 5
-          } : {
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 5,
-            elevation: 1
-          }}
+          className={`rounded-[1.5rem] flex-col overflow-hidden border ${isActive ? "border-emerald-300 bg-white" : "border-slate-200 bg-white"}`}
         >
+          <LinearGradient
+            colors={isActive ? ['#ecfdf5', '#d1fae5'] : ['#ffffff', '#f8fafc']}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+            className="p-5 gap-3"
+            style={isActive ? { borderTopWidth: 2, borderTopColor: 'rgba(255,255,255,0.8)' } : { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,1)' }}
+          >
           {isActive && (
-            <View className="absolute top-0 right-0 w-24 h-24 bg-emerald-400/10 rounded-full" />
+            <View className="absolute top-0 right-0 w-24 h-24 bg-emerald-400/20 rounded-full blur-md" />
           )}
 
           <View className="flex-row justify-between items-center relative z-10">
@@ -136,23 +143,24 @@ export default function DriverOrdersPage() {
             </View>
           </View>
 
-          <View className="flex-row gap-3 relative z-10 mt-2">
-            <View className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border ${
-              isActive ? "bg-emerald-50 border-emerald-100" : 
+          <View className="flex-row gap-4 relative z-10 mt-3">
+            <View className={`w-12 h-12 rounded-[1.25rem] flex items-center justify-center shrink-0 border-2 ${
+              isActive ? "bg-emerald-100 border-emerald-200" : 
               isSuccess ? "bg-blue-50 border-blue-100" : 
-              isFailed ? "bg-red-50 border-red-100" : "bg-slate-50 border-slate-100"
-            }`}>
-              {isActive ? <Truck size={20} color="#059669" /> : 
-               isSuccess ? <CheckCircle2 size={20} color="#2563eb" /> : 
-               isFailed ? <AlertTriangle size={20} color="#dc2626" /> : 
-               <Package size={20} color="#475569" />}
+              isFailed ? "bg-red-50 border-red-100" : "bg-slate-50 border-slate-200"
+            }`} style={isActive ? { elevation: 5, shadowColor: '#10b981', shadowOpacity: 0.2, shadowRadius: 5 } : {}}>
+              {isActive ? <Truck size={24} color="#059669" /> : 
+               isSuccess ? <CheckCircle2 size={24} color="#2563eb" /> : 
+               isFailed ? <AlertTriangle size={24} color="#dc2626" /> : 
+               <Package size={24} color="#475569" />}
             </View>
             
             <View className="flex-1 overflow-hidden">
-               <Text className="text-xs font-black text-slate-800 leading-snug tracking-tight mb-1" numberOfLines={2}>{destAddr}</Text>
-               <Text className="text-sm font-black text-emerald-600 tracking-tight">{formatRupiah(earned)}</Text>
+               <Text className="text-sm font-black text-slate-800 leading-snug tracking-tight mb-1" numberOfLines={2}>{destAddr}</Text>
+               <Text className="text-lg font-black text-emerald-600 tracking-tight">{formatRupiah(earned)}</Text>
             </View>
           </View>
+          </LinearGradient>
         </TouchableOpacity>
       </View>
     );
@@ -169,18 +177,21 @@ export default function DriverOrdersPage() {
         showsVerticalScrollIndicator={false}
       >
         
-        {/* TAB SWITCHER */}
-        <View className="bg-slate-100/80 p-1.5 rounded-[1.25rem] flex-row items-center mb-6 border border-slate-200">
+        {/* TAB SWITCHER (GEN-Z CAPSULE) */}
+        <View 
+          className="bg-slate-200 p-1.5 rounded-[2.5rem] flex-row items-center mb-6"
+          style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, borderWidth: 1, borderColor: '#cbd5e1' }}
+        >
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => setActiveTab("Active")}
-            className={`flex-1 py-3 items-center rounded-xl ${
-              activeTab === "Active" ? "bg-white border border-slate-100" : ""
+            className={`flex-1 py-4 items-center justify-center rounded-[2rem] ${
+              activeTab === "Active" ? "bg-[#7A171D] border-2 border-[#5A0E13]" : "bg-transparent border-2 border-transparent"
             }`}
-            style={activeTab === "Active" ? { elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 } : {}}
+            style={activeTab === "Active" ? { elevation: 8, shadowColor: '#7A171D', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 8, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)' } : {}}
           >
-            <Text className={`text-xs font-black ${
-              activeTab === "Active" ? "text-slate-900" : "text-slate-400"
+            <Text className={`text-sm font-black ${
+              activeTab === "Active" ? "text-white" : "text-slate-500"
             }`}>
               Sedang Berjalan
             </Text>
@@ -188,13 +199,13 @@ export default function DriverOrdersPage() {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => setActiveTab("History")}
-            className={`flex-1 py-3 items-center rounded-xl ${
-              activeTab === "History" ? "bg-white border border-slate-100" : ""
+            className={`flex-1 py-4 items-center justify-center rounded-[2rem] ${
+              activeTab === "History" ? "bg-white border-2 border-slate-300" : "bg-transparent border-2 border-transparent"
             }`}
-            style={activeTab === "History" ? { elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 } : {}}
+            style={activeTab === "History" ? { elevation: 8, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 8, borderTopWidth: 1, borderTopColor: '#ffffff' } : {}}
           >
-            <Text className={`text-xs font-black ${
-              activeTab === "History" ? "text-slate-900" : "text-slate-400"
+            <Text className={`text-sm font-black ${
+              activeTab === "History" ? "text-slate-800" : "text-slate-500"
             }`}>
               Riwayat Selesai
             </Text>

@@ -1,24 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Alert, ActivityIndicator, Dimensions } from 'react-native';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useRouter } from 'expo-router';
 import { 
   User, CreditCard, Car, ChevronRight, 
-  ShieldCheck, FileText, Clock, AlertTriangle, Camera, Building2, Truck 
+  ShieldCheck, FileText, Clock, AlertTriangle, Camera, Building2, Truck, Star, Trophy, Settings, LogOut, HelpCircle
 } from 'lucide-react-native';
 import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadToCloudinary } from '@/lib/cloudinary';
-import { Header } from '@/components/Header';
-import { OnboardingWizard } from '@/components/profile/OnboardingWizard';
-import { Button } from '@/components/ui/Button';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { width } = Dimensions.get('window');
 
 export default function ProfileScreen() {
-  const { user, login, isVendor } = useAuthStore();
+  const { user, login, isVendor, logout } = useAuthStore();
+  const router = useRouter();
   const [dbUser, setDbUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showWizard, setShowWizard] = useState(false);
   const [isUploadingFoto, setIsUploadingFoto] = useState(false);
 
   const vendorMode = isVendor();
@@ -74,10 +76,21 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Keluar Akun", 
+      "Apakah Anda yakin ingin keluar?",
+      [
+        { text: "Batal", style: "cancel" },
+        { text: "Keluar", style: "destructive", onPress: logout }
+      ]
+    );
+  };
+
   if (isLoading) {
     return (
       <View className="flex-1 bg-slate-50 items-center justify-center">
-        <ActivityIndicator size="large" color={vendorMode ? '#3b82f6' : '#7A171D'} />
+        <ActivityIndicator size="large" color={vendorMode ? '#2563eb' : '#7a171d'} />
       </View>
     );
   }
@@ -89,172 +102,262 @@ export default function ProfileScreen() {
   return (
     <View className="flex-1 bg-slate-50">
       
-      {showWizard && (
-        <OnboardingWizard 
-          dbUser={dbUser} 
-          onClose={() => setShowWizard(false)} 
-          showToast={showToast}
-          onSuccess={async (payload) => {
-            // Update to DB and Store
-            try {
-              if (user) {
-                await updateDoc(doc(db, "users", user.uid), { ...payload, profileCompleted: true });
-                setDbUser((prev: any) => ({ ...prev, profileCompleted: true, ...payload }));
-                login({ ...user, ...payload });
-                setShowWizard(false);
-                showToast("Verifikasi berhasil dikirim ke Admin!", "success");
-              }
-            } catch (e) {
-              showToast("Gagal menyimpan data", "error");
-            }
-          }}
-        />
-      )}
-
-      <ScrollView contentContainerStyle={{ paddingBottom: 100 }} bounces={false}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
         
-        {/* HERO SECTION */}
-        <View className={`pt-20 pb-16 px-6 rounded-b-[3rem] items-center shadow-lg relative ${vendorMode ? 'bg-blue-600' : 'bg-[#7A171D]'}`}>
-          
-          <View className="w-28 h-28 mb-4 relative">
-            <View className={`w-full h-full rounded-[1.5rem] overflow-hidden border-4 border-white/20 shadow-xl ${vendorMode ? 'bg-blue-800' : 'bg-[#5A0E13]'}`}>
-              {isUploadingFoto ? (
-                <View className="flex-1 items-center justify-center bg-black/20">
-                  <ActivityIndicator color="#FFFFFF" />
+        {/* 1. HERO SECTION (MEMBERSHIP ID CARD) */}
+        <View className="px-5 pt-14 pb-8 relative z-10 bg-slate-50">
+          <Animated.View 
+            entering={FadeInDown.duration(600).springify()}
+            className="rounded-[2.5rem] overflow-hidden"
+          >
+            {/* 3D Depth Layer */}
+            <View className={`absolute inset-0 rounded-[2.5rem] top-2 left-0 right-0 bottom-[-8px] ${vendorMode ? 'bg-[#1e3a8a]' : 'bg-[#450a0a]'}`} />
+            
+            <View className={`rounded-[2.5rem] overflow-hidden border-2 relative p-6 ${vendorMode ? 'bg-[#2563eb] border-[#1e3a8a]' : 'bg-[#7a171d] border-[#450a0a]'}`}>
+              <LinearGradient
+                colors={vendorMode ? ['#1d4ed8', '#1e3a8a'] : ['#9A242B', '#7a171d']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                className="absolute inset-0"
+              />
+              <View className="absolute -right-12 -top-12 w-48 h-48 bg-white/5 rounded-full" />
+              <View className="absolute -left-16 -bottom-16 w-56 h-56 bg-black/10 rounded-full" />
+
+              <View className="relative z-10">
+                <View className="flex-row items-center justify-between mb-6">
+                  <View className="flex-row items-center gap-2 bg-black/20 px-3 py-1.5 rounded-xl border border-white/10">
+                    <Trophy size={14} color="#FACC15" />
+                    <Text className="text-[10px] font-black text-yellow-400 uppercase tracking-widest">{vendorMode ? 'Vendor Elite' : 'Flash Driver'}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => Alert.alert("ID", user?.uid || "-")} className="bg-white/20 p-2 rounded-xl">
+                    <QrCodeIcon size={16} color="#FFF" />
+                  </TouchableOpacity>
                 </View>
-              ) : (
-                <Image 
-                  source={{ uri: dbUser?.photoURL || `https://ui-avatars.com/api/?name=${dbUser?.companyName || dbUser?.displayName || "Mitra"}&background=${vendorMode ? '1e3a8a' : '5A0E13'}&color=fff&size=200` }} 
-                  style={{ width: '100%', height: '100%' }}
-                />
+
+                <View className="flex-row items-center gap-5">
+                  <View className="w-20 h-20 relative">
+                    <View className="w-full h-full rounded-2xl overflow-hidden border-4 border-white/20 bg-black/20">
+                      {isUploadingFoto ? (
+                        <View className="flex-1 items-center justify-center">
+                          <ActivityIndicator color="#FFFFFF" size="small" />
+                        </View>
+                      ) : (
+                        <Image 
+                          source={{ uri: dbUser?.photoURL || `https://ui-avatars.com/api/?name=${dbUser?.companyName || dbUser?.displayName || "Mitra"}&background=${vendorMode ? '1e3a8a' : '5A0E13'}&color=fff&size=200` }} 
+                          style={{ width: '100%', height: '100%' }}
+                        />
+                      )}
+                    </View>
+                    <TouchableOpacity 
+                      onPress={pickImage}
+                      className={`absolute -bottom-2 -right-2 p-2 rounded-xl border-2 border-white/20 ${vendorMode ? 'bg-[#3b82f6]' : 'bg-[#d97706]'}`}
+                    >
+                      <Camera size={12} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+
+                  <View className="flex-1">
+                    <Text className="text-xl font-black text-white tracking-tight mb-1" numberOfLines={2}>
+                      {vendorMode ? dbUser?.companyName || "Perusahaan" : dbUser?.displayName || "Sopir Flash"}
+                    </Text>
+                    <Text className="text-[11px] font-bold text-white/70 mb-3">{dbUser?.email || "Email tidak tersedia"}</Text>
+                    
+                    {isVerified ? (
+                      <View className="self-start flex-row items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/50 px-3 py-1 rounded-lg">
+                        <ShieldCheck size={12} color="#6ee7b7" />
+                        <Text className="text-emerald-300 text-[9px] font-black uppercase tracking-widest">Akun Terverifikasi</Text>
+                      </View>
+                    ) : (
+                      <View className="self-start flex-row items-center gap-1.5 bg-white/10 border border-white/20 px-3 py-1 rounded-lg">
+                        <AlertTriangle size={12} color="#fcd34d" />
+                        <Text className="text-amber-300 text-[9px] font-black uppercase tracking-widest">Belum Verifikasi</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                {/* STATS INCORPORATED INTO HERO SECTION */}
+                <View className="mt-8 flex-row bg-black/20 rounded-2xl border border-white/10 p-4 justify-around">
+                  <View className="items-center">
+                    <View className="flex-row items-center gap-1 mb-1">
+                      <Star size={12} color="#FCD34D" />
+                      <Text className="text-[10px] text-white/70 font-black uppercase tracking-widest">Rating</Text>
+                    </View>
+                    <Text className="text-xl font-black text-white">4.9<Text className="text-xs text-white/50">/5</Text></Text>
+                  </View>
+                  <View className="w-px bg-white/10 h-full" />
+                  <View className="items-center">
+                    <View className="flex-row items-center gap-1 mb-1">
+                      {vendorMode ? <Truck size={12} color="#93C5FD" /> : <Car size={12} color="#FCA5A5" />}
+                      <Text className="text-[10px] text-white/70 font-black uppercase tracking-widest">Total Trip</Text>
+                    </View>
+                    <Text className="text-xl font-black text-white">142</Text>
+                  </View>
+                </View>
+
+              </View>
+            </View>
+          </Animated.View>
+        </View>
+
+        {/* 2. ALERTS & NOTICES */}
+        {(!isProfileComplete || isPendingApproval) && (
+          <Animated.View entering={FadeInDown.duration(600).delay(300)} className="px-5 mb-8 space-y-4">
+            {!isProfileComplete && (
+              <View className="bg-amber-400 border-2 border-amber-500 rounded-[1.5rem] p-5 shadow-sm relative overflow-hidden">
+                <View className="absolute -right-4 -bottom-4 opacity-20">
+                  <AlertTriangle size={100} color="#000" />
+                </View>
+                <View className="flex-row gap-3 mb-4 relative z-10">
+                  <View className="w-10 h-10 bg-white/30 rounded-xl items-center justify-center">
+                    <AlertTriangle size={20} color="#78350f" />
+                  </View>
+                  <View className="flex-1 justify-center">
+                    <Text className="text-sm font-black text-amber-900 tracking-tight">Akun Belum Lengkap!</Text>
+                    <Text className="text-[10px] text-amber-800 font-bold uppercase tracking-widest">Selesaikan pendaftaran Anda</Text>
+                  </View>
+                </View>
+                <TouchableOpacity onPress={() => router.push('/profile/onboarding')} className="bg-amber-900 rounded-xl h-12 items-center justify-center border border-amber-950 relative z-10">
+                  <Text className="text-white text-xs font-black uppercase tracking-widest">Verifikasi Sekarang</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {isPendingApproval && (
+              <View className="bg-blue-500 border-2 border-blue-600 rounded-[1.5rem] p-5 relative overflow-hidden">
+                <View className="absolute -right-4 -bottom-4 opacity-20">
+                  <Clock size={100} color="#000" />
+                </View>
+                <View className="flex-row gap-3 relative z-10">
+                  <View className="w-10 h-10 bg-white/30 rounded-xl items-center justify-center">
+                    <Clock size={20} color="#1e3a8a" />
+                  </View>
+                  <View className="flex-1 justify-center">
+                    <Text className="text-sm font-black text-white tracking-tight">Sedang Ditinjau Admin</Text>
+                    <Text className="text-[10px] text-blue-100 font-bold leading-relaxed pr-4">Mohon tunggu 1x24 jam untuk proses validasi dokumen kendaraan Anda.</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+          </Animated.View>
+        )}
+
+        {/* 4. MAIN MENU GROUPS (DANA Vibe) */}
+        <Animated.View entering={FadeInDown.duration(600).delay(400)} className="px-5">
+          
+          {/* Akun & Keamanan */}
+          <View>
+            <Text className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">Akun & Kendaraan</Text>
+            <View className="bg-white rounded-[2rem] border-2 border-slate-200 overflow-hidden">
+              
+              {isProfileComplete && (
+                <TouchableOpacity onPress={() => router.push('/profile/onboarding')} className="p-4 flex-row items-center justify-between border-b-2 border-slate-50 active:bg-slate-50">
+                  <View className="flex-row items-center gap-4">
+                    <View className={`w-10 h-10 rounded-xl items-center justify-center border-2 ${vendorMode ? 'bg-blue-50 border-blue-100' : 'bg-red-50 border-red-100'}`}>
+                      {vendorMode ? <Building2 size={18} color="#2563eb" /> : <Car size={18} color="#ef4444" />}
+                    </View>
+                    <View>
+                      <Text className="text-sm font-black text-slate-800 tracking-tight">{vendorMode ? 'Profil Perusahaan' : 'Data Sopir & Kendaraan'}</Text>
+                      <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{dbUser?.licensePlate || "Ubah Data Pribadi"}</Text>
+                    </View>
+                  </View>
+                  <View className="w-8 h-8 rounded-full bg-slate-100 items-center justify-center"><ChevronRight size={16} color="#64748b" /></View>
+                </TouchableOpacity>
               )}
+
+              <TouchableOpacity className="p-4 flex-row items-center justify-between border-b-2 border-slate-50 active:bg-slate-50">
+                <View className="flex-row items-center gap-4">
+                  <View className="w-10 h-10 rounded-xl items-center justify-center border-2 bg-emerald-50 border-emerald-100">
+                    <CreditCard size={18} color="#10b981" />
+                  </View>
+                  <View>
+                    <Text className="text-sm font-black text-slate-800 tracking-tight">Akun Bank & Pencairan</Text>
+                    <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Pengaturan Dana</Text>
+                  </View>
+                </View>
+                <View className="w-8 h-8 rounded-full bg-slate-100 items-center justify-center"><ChevronRight size={16} color="#64748b" /></View>
+              </TouchableOpacity>
+
+              <TouchableOpacity className="p-4 flex-row items-center justify-between active:bg-slate-50">
+                <View className="flex-row items-center gap-4">
+                  <View className="w-10 h-10 rounded-xl items-center justify-center border-2 bg-amber-50 border-amber-100">
+                    <FileText size={18} color="#d97706" />
+                  </View>
+                  <View>
+                    <Text className="text-sm font-black text-slate-800 tracking-tight">Dokumen Legalitas</Text>
+                    <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">KTP, SIM, STNK</Text>
+                  </View>
+                </View>
+                <View className="w-8 h-8 rounded-full bg-slate-100 items-center justify-center"><ChevronRight size={16} color="#64748b" /></View>
+              </TouchableOpacity>
+
             </View>
-            <TouchableOpacity 
-              onPress={pickImage}
-              className={`absolute -bottom-2 -right-2 p-2.5 rounded-xl shadow-lg border border-white/20 ${vendorMode ? 'bg-blue-500' : 'bg-[#C5A059]'}`}
-            >
-              <Camera size={16} color="#FFFFFF" />
-            </TouchableOpacity>
           </View>
 
-          <Text className="text-2xl font-black text-white tracking-tight drop-shadow-md text-center">
-            {vendorMode ? dbUser?.companyName || "Perusahaan" : dbUser?.displayName || "Sopir"}
-          </Text>
-          <Text className="text-white/80 text-sm font-medium mb-4">{dbUser?.email}</Text>
-          
-          {isVerified ? (
-            <View className="flex-row items-center gap-1.5 bg-emerald-500/20 border border-emerald-500/50 px-4 py-1.5 rounded-full">
-              <ShieldCheck size={14} color="#6ee7b7" />
-              <Text className="text-emerald-300 text-[10px] font-black uppercase tracking-widest">
-                Terverifikasi {vendorMode ? 'Vendor' : 'Mandiri'}
-              </Text>
-            </View>
-          ) : (
-            <View className="flex-row items-center gap-1.5 bg-white/10 border border-white/20 px-4 py-1.5 rounded-full">
-              {vendorMode ? <Building2 size={14} color="#FFFFFF" /> : <User size={14} color="#FFFFFF" />}
-              <Text className="text-white text-[10px] font-black uppercase tracking-widest">
-                Akun Dasar (Belum Verifikasi)
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {/* BODY */}
-        <View className="p-5 -mt-8 space-y-5">
-          
-          {!isProfileComplete && (
-            <View className="bg-amber-50 rounded-[1.5rem] p-5 border border-amber-200/50 shadow-md flex-row gap-3 relative overflow-hidden">
-              <View className="w-10 h-10 bg-amber-100 rounded-xl items-center justify-center border border-amber-200 shrink-0">
-                <AlertTriangle size={20} color="#d97706" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-black text-amber-900 mb-0.5 tracking-tight">Lengkapi Pendaftaran</Text>
-                <Text className="text-xs text-amber-800 mb-3 font-medium">Tentukan entitas Pribadi atau Perusahaan Anda sekarang.</Text>
-                <Button 
-                  onPress={() => setShowWizard(true)} 
-                  variant="gold" 
-                  size="sm"
-                >
-                  Mulai Verifikasi Akun
-                </Button>
-              </View>
-            </View>
-          )}
-
-          {isPendingApproval && (
-            <View className="bg-blue-50 rounded-[1.5rem] p-5 border border-blue-200/50 shadow-md flex-row gap-3">
-              <View className="w-10 h-10 bg-blue-100 rounded-xl items-center justify-center border border-blue-200 shrink-0">
-                <Clock size={20} color="#2563eb" />
-              </View>
-              <View className="flex-1">
-                <Text className="text-sm font-black text-blue-900 mb-0.5 tracking-tight">Menunggu Persetujuan Admin</Text>
-                <Text className="text-xs text-blue-800 font-medium leading-tight">Dokumen Anda sedang diperiksa secara manual oleh Tim Kemitraan Flash Global.</Text>
-              </View>
-            </View>
-          )}
-
-          {isProfileComplete && (
-            <TouchableOpacity 
-              activeOpacity={0.8}
-              onPress={() => setShowWizard(true)}
-              className="bg-white rounded-[1.5rem] p-5 border border-slate-100 shadow-sm flex-row items-center justify-between"
-            >
-              <View className="flex-row items-center gap-4">
-                <View className={`w-12 h-12 rounded-[1rem] flex items-center justify-center border ${vendorMode ? 'bg-blue-50 border-blue-100' : 'bg-[#C5A059]/10 border-[#C5A059]/20'}`}>
-                  {vendorMode ? <Truck size={24} color="#2563eb" /> : <Car size={24} color="#A68345" />}
+          {/* Pengaturan & Bantuan */}
+          <View className="mt-8">
+            <Text className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">Lainnya</Text>
+            <View className="bg-white rounded-[2rem] border-2 border-slate-200 overflow-hidden">
+              
+              <TouchableOpacity className="p-4 flex-row items-center justify-between border-b-2 border-slate-50 active:bg-slate-50">
+                <View className="flex-row items-center gap-4">
+                  <View className="w-10 h-10 rounded-xl items-center justify-center border-2 bg-indigo-50 border-indigo-100">
+                    <HelpCircle size={18} color="#6366f1" />
+                  </View>
+                  <View>
+                    <Text className="text-sm font-black text-slate-800 tracking-tight">Pusat Bantuan</Text>
+                    <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Hubungi CS Flash</Text>
+                  </View>
                 </View>
-                <View>
-                  <Text className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{vendorMode ? 'Manajemen Armada' : dbUser?.vehicleType || "Tipe Kendaraan"}</Text>
-                  <Text className="text-base font-black text-slate-800 tracking-tight">{vendorMode ? 'Akses Portal Vendor' : dbUser?.licensePlate || "Belum ada plat"}</Text>
-                </View>
-              </View>
-              <View className={`px-3 py-1.5 rounded-lg border ${vendorMode ? 'bg-blue-50 border-blue-200' : 'bg-slate-50 border-slate-200'}`}>
-                <Text className={`text-[10px] font-black uppercase tracking-widest ${vendorMode ? 'text-blue-600' : 'text-slate-600'}`}>Edit</Text>
-              </View>
-            </TouchableOpacity>
-          )}
+                <View className="w-8 h-8 rounded-full bg-slate-100 items-center justify-center"><ChevronRight size={16} color="#64748b" /></View>
+              </TouchableOpacity>
 
-          {/* MENU LIST */}
-          <View className="bg-white rounded-[1.5rem] border border-slate-100 shadow-sm overflow-hidden">
-            <MenuRow 
-              icon={vendorMode ? <Building2 size={16} color="#3b82f6" /> : <User size={16} color="#7A171D" />} 
-              title={vendorMode ? "Informasi PT/CV" : "Informasi Pribadi"} 
-              bgIcon={vendorMode ? "bg-blue-50" : "bg-[#7A171D]/10"}
-            />
-            <MenuRow 
-              icon={<CreditCard size={16} color="#10b981" />} 
-              title={vendorMode ? "Rekening Perusahaan" : "Rekening & Pencairan"} 
-              bgIcon="bg-emerald-50"
-            />
-            <MenuRow 
-              icon={<FileText size={16} color="#f59e0b" />} 
-              title="Dokumen Legalitas" 
-              bgIcon="bg-amber-50"
-            />
-            <MenuRow 
-              icon={<ShieldCheck size={16} color="#6366f1" />} 
-              title="Pusat Bantuan & Tiket" 
-              border={false} 
-              bgIcon="bg-indigo-50"
-            />
+              <TouchableOpacity className="p-4 flex-row items-center justify-between active:bg-slate-50">
+                <View className="flex-row items-center gap-4">
+                  <View className="w-10 h-10 rounded-xl items-center justify-center border-2 bg-slate-100 border-slate-200">
+                    <Settings size={18} color="#475569" />
+                  </View>
+                  <View>
+                    <Text className="text-sm font-black text-slate-800 tracking-tight">Pengaturan Aplikasi</Text>
+                    <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Notifikasi, Keamanan</Text>
+                  </View>
+                </View>
+                <View className="w-8 h-8 rounded-full bg-slate-100 items-center justify-center"><ChevronRight size={16} color="#64748b" /></View>
+              </TouchableOpacity>
+
+            </View>
           </View>
-        </View>
+
+        </Animated.View>
+
+        {/* LOGOUT BUTTON */}
+        <Animated.View entering={FadeInDown.duration(600).delay(500)} className="px-5 mt-10">
+          <TouchableOpacity 
+            onPress={handleLogout}
+            activeOpacity={0.8}
+            className="bg-white border-2 border-red-100 rounded-[1.5rem] p-4 flex-row items-center justify-center gap-2"
+          >
+            <LogOut size={16} color="#ef4444" />
+            <Text className="text-sm font-black text-red-500 uppercase tracking-widest">Keluar Akun</Text>
+          </TouchableOpacity>
+          <Text className="text-center text-[9px] font-bold text-slate-400 mt-4 tracking-widest uppercase">Flash Global v1.0.0</Text>
+        </Animated.View>
 
       </ScrollView>
     </View>
   );
 }
 
-function MenuRow({ icon, title, border = true, bgIcon = "bg-slate-100" }: { icon: React.ReactNode, title: string, border?: boolean, bgIcon?: string }) {
+// QrCodeIcon Helper since it was missing from lucide import
+function QrCodeIcon({ size, color }: { size: number, color: string }) {
   return (
-    <TouchableOpacity className={`w-full flex-row items-center justify-between p-4 active:bg-slate-50 ${border ? 'border-b border-slate-100' : ''}`}>
-      <View className="flex-row items-center gap-3.5">
-        <View className={`w-8 h-8 rounded-lg items-center justify-center border border-white shadow-sm ${bgIcon}`}>
-          {icon}
-        </View>
-        <Text className="text-sm font-bold text-slate-800">{title}</Text>
+    <View style={{ width: size, height: size, borderWidth: 2, borderColor: color, borderRadius: 4, padding: 2 }}>
+      <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+         <View style={{ width: '40%', height: '40%', backgroundColor: color }} />
+         <View style={{ width: '40%', height: '40%', backgroundColor: color }} />
+         <View style={{ width: '40%', height: '40%', backgroundColor: color, marginTop: '20%' }} />
+         <View style={{ width: '40%', height: '40%', backgroundColor: color, marginTop: '20%', borderRadius: 2 }} />
       </View>
-      <ChevronRight color="#cbd5e1" size={18} />
-    </TouchableOpacity>
-  );
+    </View>
+  )
 }
+

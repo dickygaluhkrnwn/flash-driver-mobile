@@ -20,25 +20,30 @@ export function BottomNav({ state, descriptors, navigation }: BottomTabBarProps)
   const radarGradient = vendorMode ? ['#1e3a8a', '#2563eb'] : ['#5A0E13', '#7A171D'];
 
   // Map route names to icons
+  const getIconColor = (isActive: boolean) => {
+    if (!isActive) return '#94a3b8'; // slate-400
+    return vendorMode ? '#2563eb' : '#9A242B';
+  };
+
   const getIcon = (routeName: string, isActive: boolean) => {
-    const color = isActive ? '#FFFFFF' : '#94a3b8'; // white vs slate-400
-    const size = isActive ? 24 : 20;
+    const color = routeName === 'radar' ? '#FFFFFF' : getIconColor(isActive);
+    const size = isActive ? 22 : 24; // slightly smaller when active to fit the pill, or keep it consistent
 
     switch (routeName) {
       case 'dashboard':
-        return <Home size={size} color={color} strokeWidth={isActive ? 2.5 : 2} />;
+        return <Home size={22} color={color} strokeWidth={isActive ? 2.5 : 2} />;
       case 'orders':
-        return <History size={size} color={color} strokeWidth={isActive ? 2.5 : 2} />;
+        return <History size={22} color={color} strokeWidth={isActive ? 2.5 : 2} />;
       case 'fleet':
-        return <Truck size={size} color={color} strokeWidth={isActive ? 2.5 : 2} />;
+        return <Truck size={22} color={color} strokeWidth={isActive ? 2.5 : 2} />;
       case 'radar':
         return <Radar size={28} color="#FFFFFF" strokeWidth={2.5} />;
       case 'wallet':
-        return <Wallet size={size} color={color} strokeWidth={isActive ? 2.5 : 2} />;
+        return <Wallet size={22} color={color} strokeWidth={isActive ? 2.5 : 2} />;
       case 'profile':
-        return <User size={size} color={color} strokeWidth={isActive ? 2.5 : 2} />;
+        return <User size={22} color={color} strokeWidth={isActive ? 2.5 : 2} />;
       default:
-        return <Home size={size} color={color} />;
+        return <Home size={22} color={color} />;
     }
   };
 
@@ -57,8 +62,8 @@ export function BottomNav({ state, descriptors, navigation }: BottomTabBarProps)
   return (
     <View className="absolute bottom-5 left-0 right-0 items-center justify-center pointer-events-box-none z-50">
       <View 
-        className="flex-row items-center justify-between px-2 bg-white/90 backdrop-blur-xl rounded-[2.5rem] border border-white"
-        style={{ width: MAX_WIDTH, height: 76, elevation: 15, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20 }}
+        className="flex-row items-center justify-between px-2 bg-white rounded-[2rem] border border-slate-100"
+        style={{ width: MAX_WIDTH, height: 72, elevation: 8, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12 }}
       >
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
@@ -87,48 +92,58 @@ export function BottomNav({ state, descriptors, navigation }: BottomTabBarProps)
                 key={route.key}
                 onPress={onPress}
                 activeOpacity={0.8}
-                className="relative flex items-center justify-center w-[60px] h-[60px]"
+                className="relative flex items-center justify-center w-16 h-full"
               >
                 <View 
-                  className="absolute -top-12 w-20 h-20 bg-white/20 rounded-full flex items-center justify-center border-t border-white"
-                  style={{ elevation: 20, shadowColor: vendorMode ? '#2563eb' : '#7A171D', shadowOffset: { width: 0, height: -5 }, shadowOpacity: 0.5, shadowRadius: 20, padding: 6 }}
+                  className="absolute -top-6 items-center justify-center bg-white"
+                  style={{ 
+                    width: 64, 
+                    height: 64, 
+                    borderRadius: 32,
+                    elevation: 6, // Pure Android elevation, guarantees circular shadow
+                    shadowColor: vendorMode ? '#2563eb' : '#9A242B', 
+                    shadowOffset: { width: 0, height: 4 }, 
+                    shadowOpacity: 0.3, 
+                    shadowRadius: 6
+                  }}
                 >
-                  <LinearGradient
-                    colors={radarGradient as [string, string]}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    className="w-full h-full rounded-full flex items-center justify-center border border-white/20"
+                  <View 
+                    className="items-center justify-center"
+                    style={{ 
+                      width: 54, 
+                      height: 54, 
+                      borderRadius: 27,
+                      backgroundColor: vendorMode ? '#2563eb' : '#9A242B' 
+                    }}
                   >
-                    {getIcon(route.name, isFocused)}
-                  </LinearGradient>
+                    {getIcon(route.name, true)}
+                  </View>
                 </View>
               </TouchableOpacity>
             );
           }
+
+          const activeBg = vendorMode ? 'bg-blue-50' : 'bg-[#7A171D]/10';
+          const activeTextColor = vendorMode ? 'text-blue-700' : 'text-[#9A242B]';
 
           return (
             <TouchableOpacity
               key={route.key}
               onPress={onPress}
               activeOpacity={0.7}
-              className="relative flex-1 items-center justify-center h-[60px]"
+              className="flex-1 items-center justify-center h-full"
             >
-              {isFocused && (
-                <View className="absolute inset-1 rounded-[2rem] overflow-hidden" style={{ elevation: 5, shadowColor: vendorMode ? '#1e40af' : '#450a0a', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5 }}>
-                  <LinearGradient 
-                    colors={activeGradient as [string, string]} 
-                    start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} 
-                    className="absolute inset-0 border border-white/20 rounded-[2rem]" 
-                    style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.3)' }}
-                  />
-                </View>
-              )}
-              <View className="relative z-10 flex-col items-center justify-center space-y-1">
+              <View 
+                className={`items-center justify-center ${isFocused ? 'flex-row py-2.5 px-4 rounded-full ' + activeBg : 'bg-transparent'}`}
+              >
                 {getIcon(route.name, isFocused)}
-                <Text 
-                  className={`text-[9px] tracking-wide mt-1 ${isFocused ? 'text-white font-black' : 'text-slate-400 font-bold'}`}
-                >
-                  {getLabel(route.name)}
-                </Text>
+                {isFocused && (
+                  <Text 
+                    className={`text-[11px] font-black ml-1.5 tracking-tight ${activeTextColor}`}
+                  >
+                    {getLabel(route.name)}
+                  </Text>
+                )}
               </View>
             </TouchableOpacity>
           );

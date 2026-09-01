@@ -88,7 +88,7 @@ export default function DashboardVendor({ driverStatus, isLocked, balance }: Das
   }, [user, isLocked]);
 
   return (
-    <View className="space-y-6">
+    <View className="pt-4 pb-8">
       
       {/* ========================================================= */}
       {/* BANNER SOFT-LOCK                                          */}
@@ -97,7 +97,7 @@ export default function DashboardVendor({ driverStatus, isLocked, balance }: Das
         <Animated.View 
           entering={FadeInDown.duration(400)}
           layout={Layout.springify()}
-          className="bg-amber-50 rounded-[1.5rem] p-4 border border-amber-200/50 shadow-sm flex-row gap-3 overflow-hidden relative"
+          className="bg-amber-50 rounded-[1.5rem] p-4 border border-amber-200/50 shadow-sm flex-row gap-3 overflow-hidden relative mb-8"
         >
           <View className="absolute -right-4 -top-4 w-20 h-20 bg-amber-200/30 rounded-full" />
           <View className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0 border border-amber-200">
@@ -121,7 +121,7 @@ export default function DashboardVendor({ driverStatus, isLocked, balance }: Das
         <Animated.View 
           entering={FadeInDown.duration(400)}
           layout={Layout.springify()}
-          className="bg-red-50 rounded-[1.5rem] p-4 border border-red-200/50 shadow-sm flex-row gap-3 overflow-hidden"
+          className="bg-red-50 rounded-[1.5rem] p-4 border border-red-200/50 shadow-sm flex-row gap-3 overflow-hidden mb-8"
         >
           <View className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center shrink-0 border border-red-200">
             <Lock color="#dc2626" size={20} />
@@ -134,72 +134,60 @@ export default function DashboardVendor({ driverStatus, isLocked, balance }: Das
       )}
 
       {/* ========================================================= */}
-      {/* SECTION 1: DOMPET KORPORAT (3D PREMIUM CARD)                */}
+      {/* SECTION 1: DOMPET KORPORAT (GOJEK/GRAB STYLE)               */}
       {/* ========================================================= */}
       <Animated.View 
         entering={FadeInUp.delay(100).duration(400)}
-        className={`rounded-[2.5rem] overflow-hidden ${isLocked ? 'opacity-80' : ''}`}
-        style={{ elevation: 20, shadowColor: '#1e3a8a', shadowOffset: { width: 0, height: 15 }, shadowOpacity: 0.4, shadowRadius: 25 }}
+        className={`bg-[#1e40af] rounded-[2rem] p-6 mb-8 relative overflow-hidden ${isLocked ? 'opacity-80' : ''}`}
+        style={{ elevation: 10, shadowColor: '#1e3a8a', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12 }}
       >
-        <LinearGradient
-          colors={['#1e3a8a', '#2563eb']}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          className="p-7 relative border border-blue-400/30"
-          style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)' }}
-        >
-          <View className="absolute top-0 right-0 w-40 h-40 bg-blue-300/20 rounded-full" />
-          <View className="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-500/30 rounded-full blur-xl" />
-          
-          <View className="flex-row justify-between items-start mb-8 relative z-10">
-            <View>
-              <View className="flex-row items-center gap-1.5 mb-1.5">
-                <Building2 color="#93c5fd" size={12} />
-                <Text className="text-blue-200 text-xs font-black uppercase tracking-widest">Total Pendapatan</Text>
-              </View>
-              <Text className="text-4xl font-black text-white tracking-tight">
-                <Text className="text-xl text-blue-200">Rp </Text>
+        <View className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full" />
+        <View className="absolute right-12 top-12 w-16 h-16 bg-white/5 rounded-full" />
+        
+        <View className="flex-row justify-between items-center mb-6">
+          <View>
+            <View className="flex-row items-center gap-1.5 mb-1">
+              <Building2 color="#93c5fd" size={14} />
+              <Text className="text-blue-200 text-[11px] font-black uppercase tracking-widest">Saldo Perusahaan</Text>
+            </View>
+            <View className="flex-row items-end gap-1">
+              <Text className="text-blue-200 text-lg font-bold mb-1">Rp</Text>
+              <Text className="text-3xl font-black text-white tracking-tight">
                 {balance.toLocaleString('id-ID')}
               </Text>
             </View>
-            <View className="w-14 h-14 bg-white/10 rounded-[1.25rem] items-center justify-center border border-white/20" style={{ elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10 }}>
-              <Wallet color="#93c5fd" size={26} />
-            </View>
           </View>
+          <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center">
+            <Wallet color="#FFFFFF" size={24} />
+          </View>
+        </View>
 
-          <View className="flex-row gap-3 relative z-10">
-            <TouchableOpacity 
-              disabled={isLocked}
-              activeOpacity={0.8}
-              onPress={() => router.push('/(tabs)/wallet')}
-              className={`flex-1 rounded-[1.5rem] overflow-hidden ${isLocked ? 'opacity-50' : ''}`}
-              style={{ elevation: 8, shadowColor: '#1d4ed8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 10 }}
-            >
-              <LinearGradient
-                colors={['#3b82f6', '#2563eb']}
-                start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
-                className="py-4 items-center border border-blue-300/50"
-                style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.4)' }}
-              >
-                <Text className="text-white text-sm font-black tracking-wide">Tarik Dana PT</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              disabled={isLocked}
-              activeOpacity={0.8}
-              onPress={() => router.push('/(tabs)/wallet')}
-              className={`flex-1 bg-white/10 py-4 rounded-[1.5rem] items-center border border-white/20 ${isLocked ? 'opacity-50' : ''}`}
-            >
-              <Text className="text-white text-sm font-bold tracking-wide">Cek Mutasi</Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+        <View className="flex-row gap-3">
+          <TouchableOpacity 
+            disabled={isLocked}
+            activeOpacity={0.8}
+            onPress={() => router.push('/(tabs)/wallet')}
+            className={`flex-1 bg-white py-3.5 rounded-[1.25rem] items-center ${isLocked ? 'opacity-50' : ''}`}
+            style={{ elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}
+          >
+            <Text className="text-[#1e40af] text-sm font-black tracking-wide">Tarik Dana PT</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            disabled={isLocked}
+            activeOpacity={0.8}
+            onPress={() => router.push('/(tabs)/wallet')}
+            className={`flex-1 bg-[#1e3a8a] py-3.5 rounded-[1.25rem] items-center border border-[#1e3a8a] ${isLocked ? 'opacity-50' : ''}`}
+          >
+            <Text className="text-white text-sm font-bold tracking-wide">Cek Mutasi</Text>
+          </TouchableOpacity>
+        </View>
       </Animated.View>
 
       {/* ========================================================= */}
       {/* SECTION 2: STATUS ARMADA (FLEET VIEW BENTO BOX)             */}
       {/* ========================================================= */}
-      <Animated.View entering={FadeInUp.delay(200).duration(400)}>
+      <Animated.View entering={FadeInUp.delay(200).duration(400)} className="mb-8">
         <View className="flex-row items-center justify-between mb-3 px-2 mt-2">
           <Text className="text-sm font-black text-slate-800 tracking-tight">Manajemen Armada</Text>
           <TouchableOpacity 
@@ -240,7 +228,7 @@ export default function DashboardVendor({ driverStatus, isLocked, balance }: Das
       {/* ========================================================= */}
       {/* SECTION 3: PERFORMA SOPIR (APPLE HEALTH PROGRESS BAR)       */}
       {/* ========================================================= */}
-      <Animated.View entering={FadeInUp.delay(300).duration(400)}>
+      <Animated.View entering={FadeInUp.delay(300).duration(400)} className="mb-8">
         <View className="flex-row items-center justify-between mb-3 px-2 mt-4">
           <Text className="text-sm font-black text-slate-800 tracking-tight">Performa Karyawan</Text>
           <TouchableOpacity 

@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { Pressable, Text, ActivityIndicator, Animated, ViewStyle } from 'react-native';
+import React from 'react';
+import { Pressable, Text, ActivityIndicator, ViewStyle, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export interface ButtonProps {
@@ -25,103 +25,82 @@ export function Button({
   ...props 
 }: ButtonProps) {
   
-  const scaleValue = useRef(new Animated.Value(1)).current;
-
-  const handlePressIn = () => {
-    Animated.spring(scaleValue, {
-      toValue: 0.95,
-      useNativeDriver: true,
-      speed: 20,
-      bounciness: 10,
-    }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.spring(scaleValue, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 20,
-      bounciness: 10,
-    }).start();
-  };
-
   const sizes = {
     sm: "h-10 px-4",
-    md: "h-14 px-6", // Taller for Gen Z chunky feel
-    lg: "h-16 px-8",
-  };
-
-  const textVariants = {
-    primary: "text-white font-black tracking-wide",
-    gold: "text-white font-black tracking-wide",
-    outline: "text-slate-800 font-bold",
-    ghost: "text-slate-700 font-bold",
+    md: "h-12 px-6",
+    lg: "h-14 px-8",
   };
 
   const textSizes = {
-    sm: "text-sm",
-    md: "text-base",
-    lg: "text-lg",
+    sm: "text-xs",
+    md: "text-sm",
+    lg: "text-base",
   };
 
-  // Determine Gradient Colors
+  // Determine Colors
   let gradientColors = ['transparent', 'transparent'];
-  let shadowStyle = {};
+  let shadowBgColor = "bg-transparent";
   let borderStyle = "border-0";
-  let highlightStyle = {};
+  let textStyle = "text-slate-700 font-bold tracking-wide";
 
   if (variant === 'primary') {
-    gradientColors = ['#9A242B', '#7A171D']; // Merah Marun Gradient
-    shadowStyle = { elevation: 8, shadowColor: '#7A171D', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 10 };
-    highlightStyle = { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)' }; // 3D highlight
+    // Merah Flash
+    gradientColors = ['#dc2626', '#b91c1c'];
+    shadowBgColor = "bg-red-900";
+    borderStyle = "border border-red-800";
+    textStyle = "text-white font-bold tracking-widest uppercase";
   } else if (variant === 'gold') {
-    gradientColors = ['#D4B371', '#C5A059'];
-    shadowStyle = { elevation: 8, shadowColor: '#C5A059', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 10 };
-    highlightStyle = { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.3)' };
+    // Emas Premium
+    gradientColors = ['#d97706', '#b45309'];
+    shadowBgColor = "bg-amber-900";
+    borderStyle = "border border-amber-800";
+    textStyle = "text-white font-bold tracking-widest uppercase";
   } else if (variant === 'outline') {
     gradientColors = ['#ffffff', '#f8fafc'];
-    shadowStyle = { elevation: 2, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 };
-    borderStyle = "border-2 border-slate-200";
+    shadowBgColor = "bg-slate-300";
+    borderStyle = "border border-slate-300";
+    textStyle = "text-slate-700 font-bold tracking-widest uppercase";
+  } else if (variant === 'ghost') {
+    textStyle = "text-slate-600 font-bold tracking-widest uppercase";
   }
 
   const isGradient = variant === 'primary' || variant === 'gold';
+  const hasShadowLayer = variant !== 'ghost';
 
   return (
-    <Animated.View 
-      style={[{ transform: [{ scale: scaleValue }] }, style]} 
-      className={`rounded-[1.25rem] overflow-visible ${(disabled || isLoading) ? 'opacity-50' : ''} ${className}`}
-    >
+    <View style={style} className={`relative ${(disabled || isLoading) ? 'opacity-50' : ''} ${className}`}>
+      {/* 3D Shadow Layer (Subtle) */}
+      {hasShadowLayer && (
+        <View className={`absolute inset-0 rounded-2xl ${shadowBgColor} translate-y-1`} />
+      )}
+      
+      {/* Main Button */}
       <Pressable
         onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
         disabled={disabled || isLoading}
         style={({ pressed }) => [
           {
             width: '100%',
-            borderRadius: 20,
+            borderRadius: 16,
             overflow: 'hidden',
           },
-          shadowStyle,
-          variant === 'ghost' && pressed && { backgroundColor: 'rgba(0,0,0,0.05)' }
+          pressed && hasShadowLayer ? { transform: [{ translateY: 2 }] } : undefined,
+          variant === 'ghost' && pressed ? { backgroundColor: 'rgba(0,0,0,0.05)' } : undefined
         ]}
         {...props}
       >
         <LinearGradient
-          colors={isGradient ? gradientColors : ['transparent', 'transparent']}
+          colors={isGradient ? (gradientColors as [string, string]) : (['transparent', 'transparent'] as [string, string])}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[
-            { flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
-            highlightStyle
-          ]}
-          className={`${sizes[size]} ${borderStyle}`}
+          style={[{ flex: 1, width: '100%', alignItems: 'center', justifyContent: 'center', flexDirection: 'row' }]}
+          className={`${sizes[size]} ${borderStyle} rounded-2xl relative z-10`}
         >
           {isLoading ? (
-            <ActivityIndicator color={variant === 'outline' || variant === 'ghost' ? '#64748b' : '#ffffff'} />
+            <ActivityIndicator color={variant === 'outline' || variant === 'ghost' ? '#475569' : '#ffffff'} size="small" />
           ) : (
             typeof children === 'string' ? (
-              <Text className={`${textVariants[variant]} ${textSizes[size]}`}>
+              <Text className={`${textStyle} ${textSizes[size]}`}>
                 {children}
               </Text>
             ) : (
@@ -130,6 +109,6 @@ export function Button({
           )}
         </LinearGradient>
       </Pressable>
-    </Animated.View>
+    </View>
   );
 }

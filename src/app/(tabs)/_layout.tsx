@@ -7,7 +7,8 @@ export default function TabsLayout() {
     <Tabs 
       tabBar={(props: any) => <BottomNav {...props} />}
       screenOptions={{
-        headerShown: true, // We will override the header per screen or globally
+        headerShown: true, 
+        headerTransparent: true,
         header: ({ route, options }) => {
           let title = 'Portal Mitra';
           if (options.title) title = options.title;
@@ -25,8 +26,8 @@ export default function TabsLayout() {
       <Tabs.Screen name="dashboard" options={{ title: 'Beranda' }} />
       <Tabs.Screen name="orders" options={{ title: 'Riwayat' }} />
       <Tabs.Screen name="fleet" options={{ title: 'Armada' }} />
-      <Tabs.Screen name="radar" options={{ title: 'Radar Pesanan' }} />
-      <Tabs.Screen name="wallet" options={{ title: 'Dompet & Komisi' }} />
+      <Tabs.Screen name="radar" options={{ title: 'Radar Pesanan', headerShown: false }} />
+      <Tabs.Screen name="wallet" options={{ title: 'Dompet & Komisi', headerShown: false }} />
       <Tabs.Screen name="profile" options={{ title: 'Akun Saya', headerShown: false }} />
     </Tabs>
   );

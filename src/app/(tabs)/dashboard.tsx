@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { View, Text, ActivityIndicator, ScrollView, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useUIStore } from '@/store/useUIStore';
 
 // IMPORT KOMPONEN MODULAR
 import DashboardIndividual from '@/components/dashboard/DashboardIndividual';
@@ -14,6 +15,16 @@ export default function DashboardScreen() {
   const { user, isHydrated, isVendor } = useAuthStore();
   const [isVerifying, setIsVerifying] = useState(true);
   
+  // UI Hooks (MUST BE AT THE TOP)
+  const setHeaderVisible = useUIStore(s => s.setHeaderVisible);
+  const lastScrollY = useRef(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      setHeaderVisible(true);
+    }, [setHeaderVisible])
+  );
+
   // States Global
   const [balance, setBalance] = useState(0);
   const [driverStatus, setDriverStatus] = useState<"Pending" | "Active" | "Suspended" | "">("");
@@ -74,12 +85,26 @@ export default function DashboardScreen() {
 
   const isLocked = driverStatus === "Pending" || driverStatus === "Suspended";
 
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    if (currentScrollY <= 0) {
+      setHeaderVisible(true);
+    } else if (currentScrollY > lastScrollY.current + 5) {
+      setHeaderVisible(false); // scrolling down
+    } else if (currentScrollY < lastScrollY.current - 5) {
+      setHeaderVisible(true); // scrolling up
+    }
+    lastScrollY.current = currentScrollY;
+  };
+
   return (
     <ScrollView 
       className="flex-1 bg-slate-50"
-      contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 110, paddingBottom: 100 }}
       bounces={false}
       showsVerticalScrollIndicator={false}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
     >
       {/* 
         Header sudah di-handle oleh _layout.tsx via komponen <Header />

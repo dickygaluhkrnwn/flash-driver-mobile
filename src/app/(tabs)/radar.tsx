@@ -8,9 +8,9 @@ import { useOrderRadar } from "@/hooks/useOrderRadar";
 import { OrderDetail, LocationDetail } from "@/types/order";
 import { 
   Radar, MapPin, Package, Weight, Clock, 
-  CheckCircle2, AlertTriangle, UserPlus, X, ArrowRight, ScanLine
+  CheckCircle2, AlertTriangle, UserPlus, X, ArrowRight, ScanLine, Navigation
 } from "lucide-react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, Easing } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withRepeat, withTiming, withSequence, Easing, FadeInDown } from "react-native-reanimated";
 import { Button } from "@/components/ui/Button";
 import MapView, { PROVIDER_DEFAULT } from "react-native-maps";
 import { startBackgroundLocationTracking } from "@/lib/locationTask";
@@ -128,7 +128,7 @@ export default function MobileRadarPage() {
       setShowVendorModal(false);
       
       setTimeout(() => {
-        router.push(`/(awb)/${order.id}`);
+        router.push(`/awb/${order.id}`);
       }, 1500);
 
     } catch (error) {
@@ -148,7 +148,7 @@ export default function MobileRadarPage() {
   if (!isHydrated) return null;
 
   return (
-    <View className="flex-1 bg-slate-900 relative">
+    <View className="flex-1 bg-[#0f172a] relative">
       
       {/* MAP BACKGROUND */}
       <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.4 }}>
@@ -180,19 +180,19 @@ export default function MobileRadarPage() {
 
       {/* FLOATING HEADER */}
       <View className="absolute top-12 left-4 right-4 z-40">
-        <View className="bg-white/10 px-5 py-4 rounded-[2rem] flex-row items-center justify-between border border-white/20">
+        <View className="bg-white px-5 py-4 rounded-full flex-row items-center justify-between border border-slate-100" style={{ elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 }}>
           <View>
             <View className="flex-row items-center gap-2">
               <Animated.View style={animatedPulse}>
-                <Radar size={20} color="#34d399" />
+                <Radar size={20} color="#10b981" />
               </Animated.View>
-              <Text className="text-lg font-black text-white tracking-tight">Radar Bursa</Text>
+              <Text className="text-lg font-black text-slate-800 tracking-tight">Radar Bursa</Text>
             </View>
-            <Text className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mt-0.5">Memindai Area: {user?.city || "Pusat"}</Text>
+            <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-0.5">Memindai Area: {user?.city || "Pusat"}</Text>
           </View>
-          <View className="bg-emerald-900/60 border border-emerald-500/50 px-3 py-1.5 rounded-full flex-row items-center gap-2">
-            <Animated.View style={[animatedPulse, { width: 8, height: 8, backgroundColor: '#34d399', borderRadius: 4 }]} />
-            <Text className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Online</Text>
+          <View className="bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full flex-row items-center gap-2">
+            <Animated.View style={[animatedPulse, { width: 8, height: 8, backgroundColor: '#10b981', borderRadius: 4 }]} />
+            <Text className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Online</Text>
           </View>
         </View>
       </View>
@@ -202,84 +202,95 @@ export default function MobileRadarPage() {
         <TouchableOpacity 
           onPress={() => router.push('/scanner')}
           activeOpacity={0.8}
-          className="bg-emerald-500/20 border border-emerald-500/50 w-full p-4 rounded-2xl flex-row items-center justify-center gap-3 shadow-sm"
+          className="bg-white border border-slate-100 w-full p-4 rounded-2xl flex-row items-center justify-center gap-3"
+          style={{ elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 }}
         >
-          <ScanLine size={20} color="#34d399" />
-          <Text className="text-emerald-400 font-black text-sm tracking-widest uppercase">Buka Scanner AWB (Manual)</Text>
+          <ScanLine size={20} color="#10b981" />
+          <Text className="text-slate-800 font-black text-sm tracking-widest uppercase">Buka Scanner AWB (Manual)</Text>
         </TouchableOpacity>
       </View>
 
       {/* MAIN CONTENT AREA */}
-      <ScrollView className="flex-1 z-10 px-4 pt-56 pb-32" showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        className="flex-1 z-10" 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 224, paddingBottom: 128 }}
+      >
         
         {radarLoading || orders.length === 0 ? (
           <View className="items-center justify-center mt-20">
             {error ? (
-              <View className="bg-red-900/60 border border-red-500/50 p-4 rounded-2xl w-4/5 items-center">
-                <AlertTriangle size={24} color="#ef4444" className="mb-2" />
-                <Text className="text-red-200 font-bold text-xs text-center">{error}</Text>
-              </View>
+              <Animated.View entering={FadeInDown.springify()} className="bg-red-50 border border-red-200 p-5 rounded-3xl w-5/6 items-center shadow-sm">
+                <View className="w-12 h-12 bg-red-100 rounded-full items-center justify-center mb-3">
+                  <AlertTriangle size={24} color="#ef4444" />
+                </View>
+                <Text className="text-red-700 font-black text-sm text-center">{error}</Text>
+              </Animated.View>
             ) : radarLoading ? (
-              <View className="bg-white/10 px-6 py-3 rounded-full border border-white/20">
-                <Text className="text-white font-black text-sm uppercase tracking-widest">Memindai Frekuensi...</Text>
-              </View>
+              <Animated.View entering={FadeInDown.springify()} className="bg-white px-8 py-4 rounded-full border border-slate-100 flex-row items-center gap-3 shadow-sm" style={{ elevation: 4 }}>
+                <ActivityIndicator size="small" color="#10b981" />
+                <Text className="text-slate-800 font-black text-sm uppercase tracking-widest">Memindai...</Text>
+              </Animated.View>
             ) : (
-              <View className="bg-white/10 px-6 py-3 rounded-full border border-white/20">
-                <Text className="text-slate-300 font-black text-xs uppercase tracking-widest">Area Bersih. Belum Ada Order.</Text>
-              </View>
+              <Animated.View entering={FadeInDown.springify()} className="bg-white px-8 py-4 rounded-full border border-slate-100 flex-row items-center gap-2 shadow-sm" style={{ elevation: 4 }}>
+                <CheckCircle2 size={18} color="#94a3b8" />
+                <Text className="text-slate-500 font-black text-xs uppercase tracking-widest">Area Bersih. Menunggu Order.</Text>
+              </Animated.View>
             )}
           </View>
         ) : (
           <View className="space-y-5 pb-20">
-            {orders.map(order => {
+            {orders.map((order, index) => {
               const originObj = typeof order.origin === 'object' && order.origin !== null ? (order.origin as LocationDetail) : null;
               const originAddr = originObj?.address || (typeof order.origin === 'string' ? order.origin : "Lokasi Tidak Diketahui");
               const destAddr = order.destinations && order.destinations.length > 0 ? order.destinations[0].address : (order.destination || "Tujuan Tidak Diketahui");
               const totalIncome = order.finalGrandTotal || order.breakdown?.grandTotal || order.totalCost || 0;
 
               return (
-                <View 
+                <Animated.View 
                   key={order.id} 
-                  className="bg-white/90 rounded-[2rem] border border-white overflow-hidden shadow-lg mb-4"
+                  entering={FadeInDown.delay(index * 100).springify()}
+                  className="bg-white rounded-[2rem] border border-slate-100 mb-5 relative"
+                  style={{ elevation: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10 }}
                 >
                   {/* Ribbon */}
-                  <View className="absolute top-0 right-0 bg-[#7a171d] px-4 py-1.5 rounded-bl-[1.25rem] z-10">
-                    <Text className="text-white text-[9px] font-black uppercase tracking-widest">Baru Masuk</Text>
+                  <View className="absolute top-0 right-0 bg-emerald-500 px-4 py-1.5 rounded-bl-[1.25rem] rounded-tr-[2rem] z-10 shadow-sm">
+                    <Text className="text-white text-[10px] font-black uppercase tracking-widest">Baru Masuk</Text>
                   </View>
 
                   <View className="p-6">
-                    <View className="mb-5">
-                      <View className="flex-row items-center gap-1.5 mb-1.5">
-                        <View className="w-1.5 h-1.5 bg-[#C5A059] rounded-full" />
-                        <Text className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{order.serviceType || "Reguler"} • {order.vehicleName || order.vehicle}</Text>
+                    <View className="mb-6 mt-2">
+                      <View className="flex-row items-center gap-2 mb-2">
+                        <View className="w-2 h-2 bg-emerald-500 rounded-full" />
+                        <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{order.serviceType || "Reguler"} • {order.vehicleName || order.vehicle}</Text>
                       </View>
-                      <Text className="text-3xl font-black text-emerald-600 font-mono tracking-tighter">{formatRupiah(totalIncome)}</Text>
+                      <Text className="text-3xl font-black text-slate-800 font-mono tracking-tighter">{formatRupiah(totalIncome)}</Text>
                     </View>
 
-                    {/* Rute */}
+                    {/* Rute (Gojek Style) */}
                     <View className="relative pl-4 mb-6 mt-2">
-                      <View className="absolute left-[19px] top-3 bottom-3 w-[2px] bg-slate-200 rounded-full" />
+                      <View className="absolute left-[19px] top-4 bottom-4 w-[2px] bg-slate-200 rounded-full z-0" />
                       
-                      <View className="space-y-5">
+                      <View className="space-y-6 relative z-10">
                         <View className="flex-row items-start gap-4">
-                          <View className="mt-0.5 bg-white shadow-sm p-1 rounded-full border border-slate-200 z-10">
-                            <MapPin size={16} color="#94a3b8" />
+                          <View className="mt-1 w-6 h-6 rounded-full bg-slate-100 items-center justify-center border-4 border-white shadow-sm">
+                            <View className="w-2.5 h-2.5 rounded-full bg-slate-400" />
                           </View>
                           <View className="flex-1">
-                            <Text className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Penjemputan</Text>
+                            <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Penjemputan</Text>
                             <Text className="font-black text-slate-800 text-sm leading-snug" numberOfLines={2}>{originAddr}</Text>
                           </View>
                         </View>
                         <View className="flex-row items-start gap-4">
-                          <View className="mt-0.5 bg-white shadow-sm p-1 rounded-full border border-slate-200 z-10">
-                            <MapPin size={16} color="#7a171d" />
+                          <View className="mt-1 w-6 h-6 rounded-full bg-emerald-100 items-center justify-center border-4 border-white shadow-sm">
+                            <View className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                           </View>
                           <View className="flex-1">
-                            <Text className="text-[9px] font-black text-[#7a171d] uppercase tracking-widest mb-0.5">Pengantaran</Text>
+                            <Text className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Pengantaran</Text>
                             <Text className="font-black text-slate-800 text-sm leading-snug" numberOfLines={2}>{destAddr}</Text>
                             {order.destinations && order.destinations.length > 1 && (
-                              <View className="mt-1.5 bg-[#C5A059]/10 border border-[#C5A059]/20 px-2 py-1 rounded-lg self-start">
-                                <Text className="text-[9px] font-black uppercase tracking-widest text-[#A68345]">+{order.destinations.length - 1} Titik Drop Tambahan</Text>
+                              <View className="mt-2 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg self-start">
+                                <Text className="text-[10px] font-black uppercase tracking-widest text-amber-700">+{order.destinations.length - 1} Titik Drop Tambahan</Text>
                               </View>
                             )}
                           </View>
@@ -289,44 +300,44 @@ export default function MobileRadarPage() {
 
                     {/* Spesifikasi */}
                     <View className="flex-row gap-2 mb-6">
-                      <View className="flex-1 bg-slate-50 p-2.5 rounded-[1.25rem] border border-slate-100 items-center justify-center">
-                        <Weight size={16} color="#94a3b8" className="mb-1" />
-                        <Text className="text-[10px] font-black text-slate-700">{order.totalWeight || order.weight || 0} Kg</Text>
+                      <View className="flex-1 bg-white p-3 rounded-[1.25rem] border border-slate-100 items-center justify-center" style={{ elevation: 2, shadowColor: '#94a3b8', shadowOpacity: 0.1, shadowRadius: 3 }}>
+                        <Weight size={18} color="#64748b" className="mb-2" />
+                        <Text className="text-[11px] font-black text-slate-700">{order.totalWeight || order.weight || 0} Kg</Text>
                       </View>
-                      <View className="flex-1 bg-slate-50 p-2.5 rounded-[1.25rem] border border-slate-100 items-center justify-center">
-                        <Package size={16} color="#94a3b8" className="mb-1" />
-                        <Text className="text-[10px] font-black text-slate-700 uppercase" numberOfLines={1}>{order.vehicleName || order.vehicle}</Text>
+                      <View className="flex-1 bg-white p-3 rounded-[1.25rem] border border-slate-100 items-center justify-center" style={{ elevation: 2, shadowColor: '#94a3b8', shadowOpacity: 0.1, shadowRadius: 3 }}>
+                        <Package size={18} color="#64748b" className="mb-2" />
+                        <Text className="text-[11px] font-black text-slate-700 uppercase" numberOfLines={1}>{order.vehicleName || order.vehicle}</Text>
                       </View>
-                      <View className="flex-1 bg-slate-50 p-2.5 rounded-[1.25rem] border border-slate-100 items-center justify-center">
-                        <Clock size={16} color="#94a3b8" className="mb-1" />
-                        <Text className="text-[10px] font-black text-slate-700 uppercase">Instan</Text>
+                      <View className="flex-1 bg-white p-3 rounded-[1.25rem] border border-slate-100 items-center justify-center" style={{ elevation: 2, shadowColor: '#94a3b8', shadowOpacity: 0.1, shadowRadius: 3 }}>
+                        <Clock size={18} color="#64748b" className="mb-2" />
+                        <Text className="text-[11px] font-black text-slate-700 uppercase">Instan</Text>
                       </View>
                     </View>
 
                     {user?.partnerType === "Vendor" ? (
-                      <Button 
-                        variant="outline"
-                        size="lg"
+                      <TouchableOpacity 
+                        activeOpacity={0.8}
                         onPress={() => onVendorClickAccept(order)}
                         disabled={isProcessing}
-                        className="w-full flex-row items-center justify-center gap-2 border-slate-300"
+                        className="w-full flex-row items-center justify-center gap-2 h-14 rounded-2xl"
+                        style={{ backgroundColor: '#1e293b', elevation: 4, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 5 }}
                       >
-                        <Text className="font-bold text-slate-800">Tarik Order & Tugaskan</Text>
-                        <ArrowRight size={16} color="#1e293b" />
-                      </Button>
+                        <Text className="font-black text-sm text-white uppercase tracking-widest">Tarik Order & Tugaskan</Text>
+                        <ArrowRight size={18} color="#fff" />
+                      </TouchableOpacity>
                     ) : (
-                      <Button 
-                        variant="primary"
-                        size="lg"
+                      <TouchableOpacity 
+                        activeOpacity={0.8}
                         onPress={() => handleAcceptOrder(order)}
                         disabled={isProcessing}
-                        className="w-full flex-row items-center justify-center gap-2 bg-emerald-600"
+                        className="w-full flex-row items-center justify-center gap-2 h-14 rounded-2xl"
+                        style={{ backgroundColor: '#10b981', elevation: 4, shadowColor: '#10b981', shadowOpacity: 0.4, shadowRadius: 6 }}
                       >
-                        {isProcessing ? <ActivityIndicator size="small" color="#fff" /> : <><CheckCircle2 size={20} color="#fff" /><Text className="text-white font-bold ml-2">Terima Order Sekarang</Text></>}
-                      </Button>
+                        {isProcessing ? <ActivityIndicator size="small" color="#fff" /> : <><CheckCircle2 size={20} color="#fff" /><Text className="font-black text-sm text-white uppercase tracking-widest">Ambil Pesanan</Text></>}
+                      </TouchableOpacity>
                     )}
                   </View>
-                </View>
+                </Animated.View>
               )
             })}
           </View>

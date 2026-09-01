@@ -14,7 +14,7 @@ import {
   CheckCircle2, AlertTriangle, ArrowLeft, Navigation, ShieldCheck, Focus,
   Camera, X, UploadCloud, ChevronUp, ChevronDown
 } from "lucide-react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring } from "react-native-reanimated";
+import Animated, { useSharedValue, useAnimatedStyle, withSpring, FadeInDown } from "react-native-reanimated";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Image } from "expo-image";
@@ -392,8 +392,8 @@ export default function AWBExecutionPage() {
 
       {/* BOTTOM SHEET */}
       <Animated.View 
-        style={[animatedSheetStyle, { width }]}
-        className="absolute bottom-0 left-0 bg-white rounded-t-[2.5rem] shadow-[0_-10px_20px_rgba(0,0,0,0.1)] flex-col"
+        style={[animatedSheetStyle, { width, elevation: 24, shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.15, shadowRadius: 20 }]}
+        className="absolute bottom-0 left-0 bg-white rounded-t-[2.5rem] flex-col"
       >
         <TouchableOpacity activeOpacity={0.8} onPress={toggleSheet} className="w-full py-4 items-center shrink-0">
           <View className="w-12 h-1.5 bg-slate-300 rounded-full" />
@@ -414,156 +414,179 @@ export default function AWBExecutionPage() {
         <ScrollView showsVerticalScrollIndicator={false} className="flex-1 px-6 py-6" contentContainerStyle={{ paddingBottom: 100 }}>
           
           {/* TRACKING TIMELINE / LOCATIONS */}
-          <View className="relative pl-4 mb-6">
-            <View className="absolute left-[19px] top-3 bottom-3 w-[2px] bg-slate-200 rounded-full z-0" />
+          <Animated.View entering={FadeInDown.delay(100).springify()} className="relative pl-4 mb-8">
+            {/* SOLID LINE */}
+            <View className="absolute left-[19px] top-4 bottom-4 w-[2px] bg-slate-200 rounded-full z-0" />
             
             <View className="space-y-6 relative z-10">
               <View className="flex-row items-start gap-4">
-                <View className="mt-0.5 bg-white p-1.5 rounded-full border border-slate-200">
-                  <MapPin size={16} color="#94a3b8" />
+                <View className="mt-1 w-6 h-6 rounded-full bg-slate-100 items-center justify-center border-4 border-white shadow-sm">
+                  <View className="w-2.5 h-2.5 rounded-full bg-slate-400" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Penjemputan (Pickup)</Text>
-                  <Text className="font-bold text-slate-800 text-sm leading-snug">{originAddr}</Text>
+                  <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Penjemputan (Pickup)</Text>
+                  <Text className="font-black text-slate-800 text-sm leading-snug">{originAddr}</Text>
                 </View>
               </View>
               <View className="flex-row items-start gap-4">
-                <View className="mt-0.5 bg-white p-1.5 rounded-full border border-slate-200">
-                  <MapPin size={16} color="#7a171d" />
+                <View className="mt-1 w-6 h-6 rounded-full bg-emerald-100 items-center justify-center border-4 border-white shadow-sm">
+                  <View className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                 </View>
                 <View className="flex-1">
-                  <Text className="text-[9px] font-black text-[#7a171d] uppercase tracking-widest mb-1">Tujuan (Drop)</Text>
-                  <Text className="font-bold text-slate-800 text-sm leading-snug">{destAddr}</Text>
-                  <View className="mt-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100 flex-row items-center gap-3">
-                    <View className="w-8 h-8 bg-slate-200 rounded-full items-center justify-center">
-                      <Text className="text-xs font-black text-slate-500 uppercase">{receiverName.substring(0,2)}</Text>
+                  <Text className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-1">Tujuan (Drop)</Text>
+                  <Text className="font-black text-slate-800 text-sm leading-snug">{destAddr}</Text>
+                  <View className="mt-3 bg-white p-3 rounded-2xl border border-slate-100 flex-row items-center gap-3" style={{ elevation: 2, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}>
+                    <View className="w-10 h-10 bg-emerald-50 rounded-xl items-center justify-center">
+                      <Text className="text-sm font-black text-emerald-600 uppercase">{receiverName.substring(0,2)}</Text>
                     </View>
                     <View>
-                      <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Penerima</Text>
-                      <Text className="text-xs font-black text-slate-800">{receiverName} <Text className="font-medium text-slate-500">({receiverPhone})</Text></Text>
+                      <Text className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Penerima</Text>
+                      <Text className="text-sm font-black text-slate-800">{receiverName}</Text>
+                      <Text className="text-xs font-bold text-slate-500">{receiverPhone}</Text>
                     </View>
                   </View>
                 </View>
               </View>
             </View>
-          </View>
+          </Animated.View>
 
           {/* DETAIL BARANG */}
-          <View className="mb-6">
-            <View className="flex-row items-center gap-1.5 mb-3">
-              <Package size={14} color="#64748b" />
-              <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Detail Muatan</Text>
+          <Animated.View entering={FadeInDown.delay(200).springify()} className="mb-8">
+            <View className="flex-row items-center gap-2 mb-4">
+              <Package size={16} color="#64748b" />
+              <Text className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Detail Muatan</Text>
             </View>
+            
             <View className="flex-row gap-3 mb-4">
-              <View className="flex-1 bg-slate-50 p-3 rounded-2xl border border-slate-100 items-center justify-center">
-                <Scale size={20} color="#94a3b8" className="mb-1" />
-                <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Berat</Text>
-                <Text className="text-lg font-black text-slate-800">{order.totalWeight || order.weight || 0} Kg</Text>
+              <View className="flex-1 bg-white p-4 rounded-2xl border border-slate-100 items-center justify-center" style={{ elevation: 2, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}>
+                <Scale size={24} color="#94a3b8" className="mb-2" />
+                <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Berat</Text>
+                <Text className="text-xl font-black text-slate-800 tracking-tight">{order.totalWeight || order.weight || 0} Kg</Text>
               </View>
-              <View className="flex-1 bg-slate-50 p-3 rounded-2xl border border-slate-100 items-center justify-center">
-                <Truck size={20} color="#94a3b8" className="mb-1" />
-                <Text className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Layanan</Text>
-                <Text className="text-sm font-black text-slate-800" numberOfLines={1}>{order.vehicleName || order.vehicle}</Text>
+              <View className="flex-1 bg-white p-4 rounded-2xl border border-slate-100 items-center justify-center" style={{ elevation: 2, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}>
+                <Truck size={24} color="#94a3b8" className="mb-2" />
+                <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Layanan</Text>
+                <Text className="text-sm font-black text-slate-800 tracking-tight" numberOfLines={1}>{order.vehicleName || order.vehicle}</Text>
               </View>
             </View>
 
             {destObj?.items && destObj.items.length > 0 && (
-              <View className="space-y-2">
+              <View className="space-y-3">
                 {destObj.items.map((item: DeliveryItem, idx: number) => (
-                  <View key={idx} className="flex-row justify-between items-center bg-slate-50 px-4 py-3 rounded-xl border border-slate-100">
-                    <Text className="font-bold text-slate-700 text-sm">{item.name || "-"}</Text>
-                    <View className="bg-white px-2 py-0.5 rounded-lg border border-slate-200">
-                      <Text className="font-mono text-slate-500 font-bold text-xs">x{item.value || 1}</Text>
+                  <View key={idx} className="flex-row justify-between items-center bg-white px-5 py-4 rounded-2xl border border-slate-100" style={{ elevation: 2, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3 }}>
+                    <Text className="font-black text-slate-800 text-sm tracking-tight">{item.name || "-"}</Text>
+                    <View className="bg-slate-100 px-3 py-1 rounded-lg">
+                      <Text className="font-mono text-slate-600 font-bold text-xs">x{item.value || 1}</Text>
                     </View>
                   </View>
                 ))}
               </View>
             )}
-          </View>
+          </Animated.View>
 
           {/* FORM POP / POD (INLINE) */}
           {showForm === "pickup" && (
-            <View className="bg-blue-50 p-5 rounded-[1.5rem] border border-blue-200 mb-6">
-              <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-sm font-black text-blue-900">Bukti Penjemputan (PoP)</Text>
-                <TouchableOpacity onPress={() => setShowForm(null)} className="p-1 bg-white rounded-full shadow-sm"><X size={16} color="#94a3b8"/></TouchableOpacity>
+            <Animated.View entering={FadeInDown.delay(300).springify()} className="bg-white p-5 rounded-3xl border border-slate-100 mb-6" style={{ elevation: 3, shadowColor: '#3b82f6', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6 }}>
+              <View className="flex-row justify-between items-center mb-5">
+                <View className="flex-row items-center gap-2">
+                  <View className="w-8 h-8 rounded-full bg-blue-50 items-center justify-center">
+                    <Navigation size={14} color="#3b82f6" />
+                  </View>
+                  <Text className="text-[15px] font-black text-slate-800 tracking-tight">Bukti Penjemputan</Text>
+                </View>
+                <TouchableOpacity onPress={() => setShowForm(null)} className="w-8 h-8 bg-slate-100 rounded-full items-center justify-center"><X size={16} color="#64748b"/></TouchableOpacity>
               </View>
-              <Text className="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-1.5">Catatan (Wajib)</Text>
-              <Input value={note} onChangeText={setNote} placeholder="Cth: Packing kayu, aman" className="bg-white mb-4" />
               
-              <Text className="text-[10px] font-bold text-blue-700 uppercase tracking-widest mb-1.5">Foto Bukti (Wajib)</Text>
-              <TouchableOpacity onPress={handlePickImage} className="border-2 border-blue-300 border-dashed rounded-2xl h-32 flex items-center justify-center bg-white/60 overflow-hidden">
+              <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Catatan Kurir (Wajib)</Text>
+              <Input value={note} onChangeText={setNote} placeholder="Cth: Packing rapi, aman" className="bg-slate-50 mb-5 border border-slate-200" />
+              
+              <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Foto Barang (Wajib)</Text>
+              <TouchableOpacity onPress={handlePickImage} className="border-2 border-blue-200 border-dashed rounded-2xl h-32 flex items-center justify-center bg-blue-50/50 overflow-hidden mb-5">
                 {imageUri ? (
                   <Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                 ) : (
-                  <>
-                    <Camera size={32} color="#2563eb" className="opacity-50 mb-2" />
-                    <Text className="text-xs font-black text-blue-800">Buka Kamera</Text>
-                  </>
+                  <View className="items-center">
+                    <View className="w-12 h-12 bg-white rounded-full items-center justify-center shadow-sm mb-2">
+                      <Camera size={24} color="#3b82f6" />
+                    </View>
+                    <Text className="text-xs font-black text-blue-600">Ambil Foto</Text>
+                  </View>
                 )}
               </TouchableOpacity>
               
               <Button 
                 variant="primary" 
-                className="w-full bg-blue-600 mt-4 flex-row gap-2" 
+                className="w-full flex-row justify-center gap-2 h-14 rounded-2xl items-center" 
+                style={{ backgroundColor: '#2563eb', elevation: 4, shadowColor: '#2563eb', shadowOpacity: 0.3, shadowRadius: 6 }}
                 onPress={() => handleUpdateStatus("Sedang Diproses", `Barang di-pickup: ${note}`, originAddr, "pickup")}
                 disabled={isUpdating || !note || !imageUri}
               >
-                {isUpdating ? <ActivityIndicator size="small" color="#fff" /> : <><UploadCloud size={20} color="#fff" /><Text className="text-white font-bold ml-2">Unggah & Mulai</Text></>}
+                {isUpdating ? <ActivityIndicator size="small" color="#fff" /> : <><UploadCloud size={20} color="#fff" /><Text className="text-white font-black text-sm ml-2">Mulai Pengiriman</Text></>}
               </Button>
-            </View>
+            </Animated.View>
           )}
 
           {showForm === "delivery" && (
-            <View className="bg-emerald-50 p-5 rounded-[1.5rem] border border-emerald-200 mb-6">
-              <View className="flex-row justify-between items-center mb-4">
-                <Text className="text-sm font-black text-emerald-900">Bukti Pengiriman (PoD)</Text>
-                <TouchableOpacity onPress={() => setShowForm(null)} className="p-1 bg-white rounded-full shadow-sm"><X size={16} color="#94a3b8"/></TouchableOpacity>
+            <Animated.View entering={FadeInDown.delay(300).springify()} className="bg-white p-5 rounded-3xl border border-slate-100 mb-6" style={{ elevation: 3, shadowColor: '#10b981', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 6 }}>
+              <View className="flex-row justify-between items-center mb-5">
+                <View className="flex-row items-center gap-2">
+                  <View className="w-8 h-8 rounded-full bg-emerald-50 items-center justify-center">
+                    <ShieldCheck size={14} color="#10b981" />
+                  </View>
+                  <Text className="text-[15px] font-black text-slate-800 tracking-tight">Bukti Pengiriman</Text>
+                </View>
+                <TouchableOpacity onPress={() => setShowForm(null)} className="w-8 h-8 bg-slate-100 rounded-full items-center justify-center"><X size={16} color="#64748b"/></TouchableOpacity>
               </View>
-              <Text className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-1.5">Nama Penerima / Catatan (Wajib)</Text>
-              <Input value={note} onChangeText={setNote} placeholder="Cth: Diterima oleh Bapak Budi" className="bg-white mb-4" />
               
-              <Text className="text-[10px] font-bold text-emerald-700 uppercase tracking-widest mb-1.5">Foto Drop (Wajib)</Text>
-              <TouchableOpacity onPress={handlePickImage} className="border-2 border-emerald-300 border-dashed rounded-2xl h-32 flex items-center justify-center bg-white/60 overflow-hidden">
+              <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Nama Penerima / Catatan (Wajib)</Text>
+              <Input value={note} onChangeText={setNote} placeholder="Cth: Diterima oleh Bapak Budi" className="bg-slate-50 mb-5 border border-slate-200" />
+              
+              <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Foto Barang Diterima (Wajib)</Text>
+              <TouchableOpacity onPress={handlePickImage} className="border-2 border-emerald-200 border-dashed rounded-2xl h-32 flex items-center justify-center bg-emerald-50/50 overflow-hidden mb-5">
                 {imageUri ? (
                   <Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
                 ) : (
-                  <>
-                    <Camera size={32} color="#059669" className="opacity-50 mb-2" />
-                    <Text className="text-xs font-black text-emerald-800">Buka Kamera</Text>
-                  </>
+                  <View className="items-center">
+                    <View className="w-12 h-12 bg-white rounded-full items-center justify-center shadow-sm mb-2">
+                      <Camera size={24} color="#10b981" />
+                    </View>
+                    <Text className="text-xs font-black text-emerald-600">Ambil Foto</Text>
+                  </View>
                 )}
               </TouchableOpacity>
               
               <Button 
                 variant="primary" 
-                className="w-full bg-emerald-600 mt-4 flex-row gap-2" 
+                className="w-full flex-row justify-center gap-2 h-14 rounded-2xl items-center" 
+                style={{ backgroundColor: '#059669', elevation: 4, shadowColor: '#059669', shadowOpacity: 0.3, shadowRadius: 6 }}
                 onPress={() => handleUpdateStatus("Selesai", `Paket diterima: ${note}`, destAddr, "delivery")}
                 disabled={isUpdating || !note || !imageUri}
               >
-                {isUpdating ? <ActivityIndicator size="small" color="#fff" /> : <><CheckCircle2 size={20} color="#fff" /><Text className="text-white font-bold ml-2">Selesai Pengiriman</Text></>}
+                {isUpdating ? <ActivityIndicator size="small" color="#fff" /> : <><CheckCircle2 size={20} color="#fff" /><Text className="text-white font-black text-sm ml-2">Selesai Transaksi</Text></>}
               </Button>
-            </View>
+            </Animated.View>
           )}
 
           {order.status === "Selesai" && (
-            <View className="bg-emerald-50 border border-emerald-200 p-6 rounded-[1.5rem] text-center items-center mb-6">
-              <CheckCircle2 size={40} color="#059669" className="mb-2" />
-              <Text className="text-sm font-black text-emerald-900">Pengiriman Sukses</Text>
-              <Text className="text-[10px] font-bold text-emerald-700 mt-1 uppercase tracking-widest text-center">Transaksi dicatat ke dompet.</Text>
-            </View>
+            <Animated.View entering={FadeInDown.delay(300).springify()} className="bg-white border border-emerald-100 p-6 rounded-3xl text-center items-center mb-6" style={{ elevation: 2, shadowColor: '#10b981', shadowOpacity: 0.1, shadowRadius: 4 }}>
+              <View className="w-16 h-16 bg-emerald-50 rounded-full items-center justify-center mb-3">
+                <CheckCircle2 size={32} color="#059669" />
+              </View>
+              <Text className="text-base font-black text-slate-800 tracking-tight">Pengiriman Sukses</Text>
+              <Text className="text-[10px] font-black text-slate-400 mt-1 uppercase tracking-widest text-center">Transaksi telah dicatat ke dompet Anda.</Text>
+            </Animated.View>
           )}
 
         </ScrollView>
 
         {/* BOTTOM ACTION BAR */}
         {!showForm && (
-          <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-6 pt-4 pb-8 shadow-[0_-10px_20px_rgba(0,0,0,0.05)]">
+          <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-slate-100 p-6 pt-5 pb-8" style={{ elevation: 20, shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.05, shadowRadius: 15 }}>
             
             {order.status === "Menuju Lokasi Jemput" && (
-              <Button size="lg" variant="outline" className="w-full flex-row gap-2 border-slate-300" onPress={() => setShowForm("pickup")}>
-                <Navigation size={20} color="#3b82f6" />
-                <Text className="font-bold ml-2 text-slate-800">Tiba di Lokasi (PoP)</Text>
+              <Button size="lg" variant="primary" className="w-full h-14 rounded-2xl flex-row gap-2 items-center justify-center" style={{ backgroundColor: '#3b82f6', elevation: 4, shadowColor: '#3b82f6', shadowOpacity: 0.3, shadowRadius: 6 }} onPress={() => setShowForm("pickup")}>
+                <Navigation size={20} color="#fff" />
+                <Text className="font-black text-sm text-white ml-2">Tiba di Lokasi (Pickup)</Text>
               </Button>
             )}
 
@@ -571,24 +594,25 @@ export default function AWBExecutionPage() {
               <Button 
                 size="lg" 
                 variant="primary" 
-                className="w-full bg-amber-500 flex-row gap-2" 
+                className="w-full h-14 rounded-2xl flex-row gap-2 items-center justify-center" 
+                style={{ backgroundColor: '#f59e0b', elevation: 4, shadowColor: '#f59e0b', shadowOpacity: 0.3, shadowRadius: 6 }}
                 disabled={isUpdating}
                 onPress={() => handleUpdateStatus("Dikirim", "Paket telah dimuat (In Transit)", "Dalam Perjalanan")}
               >
-                {isUpdating ? <ActivityIndicator size="small" color="#fff" /> : <><Truck size={20} color="#fff" /><Text className="text-white font-bold ml-2">Mulai Pengiriman (In Transit)</Text></>}
+                {isUpdating ? <ActivityIndicator size="small" color="#fff" /> : <><Truck size={20} color="#fff" /><Text className="font-black text-sm text-white ml-2">Mulai Pengiriman (In Transit)</Text></>}
               </Button>
             )}
 
             {order.status === "Dikirim" && (
-              <Button size="lg" variant="primary" className="w-full bg-emerald-500 flex-row gap-2" onPress={() => setShowForm("delivery")}>
+              <Button size="lg" variant="primary" className="w-full h-14 rounded-2xl flex-row gap-2 items-center justify-center" style={{ backgroundColor: '#10b981', elevation: 4, shadowColor: '#10b981', shadowOpacity: 0.3, shadowRadius: 6 }} onPress={() => setShowForm("delivery")}>
                 <ShieldCheck size={20} color="#fff" />
-                <Text className="text-white font-bold ml-2">Selesaikan Pengiriman (PoD)</Text>
+                <Text className="font-black text-sm text-white ml-2">Selesaikan Pengiriman (Drop)</Text>
               </Button>
             )}
 
             {order.status === "Selesai" && (
-              <Button size="lg" variant="outline" className="w-full" onPress={() => router.replace("/(tabs)/radar")}>
-                <Text className="font-bold text-slate-800">Kembali ke Radar</Text>
+              <Button size="lg" variant="outline" className="w-full h-14 rounded-2xl flex-row items-center justify-center border-slate-200 bg-slate-50" onPress={() => router.replace("/(tabs)/radar")}>
+                <Text className="font-black text-sm text-slate-800">Kembali ke Radar</Text>
               </Button>
             )}
 

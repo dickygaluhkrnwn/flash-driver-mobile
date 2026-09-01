@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
+import Animated, { useAnimatedStyle, withTiming, useSharedValue, Easing } from 'react-native-reanimated';
+import { useUIStore } from '@/store/useUIStore';
 import { 
   ChevronLeft, Bell, ChevronDown, 
   LogOut, Settings, LifeBuoy, User, Truck, Wallet 
@@ -38,8 +40,30 @@ export function Header({ title, showBack = false }: HeaderProps) {
     }
   };
 
+  const isHeaderVisible = useUIStore(s => s.isHeaderVisible);
+  const translateY = useSharedValue(0);
+
+  useEffect(() => {
+    translateY.value = withTiming(isHeaderVisible ? 0 : -120, {
+      duration: 300,
+      easing: Easing.out(Easing.ease),
+    });
+  }, [isHeaderVisible]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 50,
+  }));
+
   return (
-    <View className="w-full bg-white/60 backdrop-blur-3xl pt-14 pb-4 px-5 flex-row items-center justify-between border-b border-white/40 z-50">
+    <Animated.View 
+      style={animatedStyle}
+      className="w-full bg-white pt-14 pb-4 px-5 flex-row items-center justify-between border-b border-slate-100 shadow-sm"
+    >
       
       {/* KIRI: Tombol Back & Judul */}
       <View className="flex-row items-center gap-3">
@@ -60,8 +84,7 @@ export function Header({ title, showBack = false }: HeaderProps) {
       {/* KANAN: Notifikasi & Profil */}
       <View className="flex-row items-center gap-3">
         <TouchableOpacity 
-          className="relative w-11 h-11 flex items-center justify-center rounded-[1.25rem] bg-white/90 border border-white/50" 
-          style={{ elevation: 5, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 }}
+          className="relative w-11 h-11 flex items-center justify-center rounded-[1.25rem] bg-slate-50 border border-slate-100" 
         >
           <Bell size={20} color="#334155" />
           <View className={`absolute top-2.5 right-2.5 w-2.5 h-2.5 rounded-full border-2 border-white ${notifColor}`} />
@@ -69,8 +92,7 @@ export function Header({ title, showBack = false }: HeaderProps) {
 
         <TouchableOpacity 
           onPress={() => setIsProfileOpen(true)}
-          className="flex-row items-center gap-1.5 p-1 pr-2 rounded-[1.25rem] bg-white/90 border border-white/50" 
-          style={{ elevation: 5, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 }}
+          className="flex-row items-center gap-1.5 p-1 pr-2 rounded-[1.25rem] bg-slate-50 border border-slate-100" 
         >
           <View className="relative w-9 h-9 rounded-[1rem] overflow-hidden bg-slate-100 border border-slate-200">
             {user?.photoURL ? (
@@ -86,14 +108,15 @@ export function Header({ title, showBack = false }: HeaderProps) {
       </View>
 
       {/* MODAL DROPDOWN PROFIL */}
-      <Modal visible={isProfileOpen} transparent animationType="none">
+      <Modal visible={isProfileOpen} transparent animationType="fade">
         <TouchableOpacity 
-          className="flex-1 bg-black/10" 
+          className="flex-1 bg-black/20" 
           activeOpacity={1} 
           onPress={() => setIsProfileOpen(false)}
         >
           <View 
-            className="absolute top-[85px] right-4 w-[240px] bg-white/95 backdrop-blur-2xl rounded-3xl p-2 border border-slate-100" style={{ elevation: 15, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20 }}
+            className="absolute top-[90px] right-4 w-[240px] bg-white rounded-3xl p-2 border border-slate-100" 
+            style={{ elevation: 15, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20 }}
           >
             {/* Header Profil Mini */}
             <View className="px-3 py-3 mb-2 bg-slate-50/80 rounded-2xl border border-slate-100 items-center">
@@ -134,6 +157,6 @@ export function Header({ title, showBack = false }: HeaderProps) {
           </View>
         </TouchableOpacity>
       </Modal>
-    </View>
+    </Animated.View>
   );
 }

@@ -1,3 +1,5 @@
+import * as FileSystem from 'expo-file-system/legacy';
+
 export const uploadToCloudinary = async (imageUri: string): Promise<string> => {
   try {
     const cloudName = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME;
@@ -7,26 +9,19 @@ export const uploadToCloudinary = async (imageUri: string): Promise<string> => {
       throw new Error("Cloudinary credentials not configured");
     }
 
-    const data = new FormData();
-    data.append("file", {
-      uri: imageUri,
-      type: "image/jpeg",
-      name: "upload.jpg"
-    } as any);
-    data.append("upload_preset", uploadPreset);
+    const url = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+    
+    // expo-file-system handles multipart/form-data efficiently without the FormData fetch bugs
+    const response = await FileSystem.uploadAsync(url, imageUri, {
+      fieldName: 'file',
+      httpMethod: 'POST',
+      uploadType: FileSystem.FileSystemUploadType.MULTIPART,
+      parameters: {
+        upload_preset: uploadPreset,
+      },
+    });
 
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-      {
-        method: "POST",
-        body: data,
-        headers: {
-          "Content-Type": "multipart/form-data",
-        }
-      }
-    );
-
-    const json = await response.json();
+    const json = JSON.parse(response.body);
     if (json.secure_url) {
       return json.secure_url;
     } else {

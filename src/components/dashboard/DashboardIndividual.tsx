@@ -138,14 +138,14 @@ export default function DashboardIndividual({ driverStatus, isLocked, balance }:
   }, [user, isLocked]);
 
   return (
-    <View className="space-y-6">
+    <View className="pt-4 pb-8">
       
       {/* ========================================================= */}
       {/* BANNER SOFT-LOCK                                          */}
       {/* ========================================================= */}
       {driverStatus === "Pending" && (
         <View 
-          className="bg-amber-50 rounded-[1.5rem] p-4 border border-amber-200/50 shadow-sm flex-row gap-3 overflow-hidden relative"
+          className="bg-amber-50 rounded-[1.5rem] p-4 border border-amber-200/50 shadow-sm flex-row gap-3 overflow-hidden relative mb-8"
         >
           <View className="absolute -right-4 -top-4 w-20 h-20 bg-amber-200/30 rounded-full" />
           <View className="w-10 h-10 bg-amber-100 rounded-xl flex items-center justify-center shrink-0 border border-amber-200">
@@ -167,7 +167,7 @@ export default function DashboardIndividual({ driverStatus, isLocked, balance }:
 
       {driverStatus === "Suspended" && (
         <View 
-          className="bg-red-50 rounded-[1.5rem] p-4 border border-red-200/50 shadow-sm flex-row gap-3 overflow-hidden"
+          className="bg-red-50 rounded-[1.5rem] p-4 border border-red-200/50 shadow-sm flex-row gap-3 overflow-hidden mb-8"
         >
           <View className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center shrink-0 border border-red-200">
             <Lock color="#dc2626" size={20} />
@@ -183,7 +183,7 @@ export default function DashboardIndividual({ driverStatus, isLocked, balance }:
       {/* 🚀 BANNER PENGIRIMAN AKTIF                                  */}
       {/* ========================================================= */}
       {activeOrder && (
-        <View style={{ elevation: 10, shadowColor: '#10b981', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 15 }}>
+        <View className="mb-8" style={{ elevation: 10, shadowColor: '#10b981', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 15 }}>
           <TouchableOpacity 
             activeOpacity={0.8}
             onPress={() => { /* router.push('/driver/awb/${activeOrder.id}') */ }}
@@ -220,7 +220,7 @@ export default function DashboardIndividual({ driverStatus, isLocked, balance }:
       {/* SECTION 1: TOGGLE STATUS (iOS SEGMENTED CONTROL VIBE)     */}
       {/* ========================================================= */}
       <View 
-        className={`bg-slate-100 p-1.5 rounded-[2.5rem] flex-row items-center ${isLocked ? 'opacity-80' : ''}`}
+        className={`bg-slate-100 p-1.5 rounded-[2.5rem] flex-row items-center mb-8 ${isLocked ? 'opacity-80' : ''}`}
         style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, borderWidth: 1, borderColor: '#e2e8f0' }}
       >
         <TouchableOpacity 
@@ -250,7 +250,7 @@ export default function DashboardIndividual({ driverStatus, isLocked, balance }:
       {/* ========================================================= */}
       {/* SECTION 2: RADAR & CURRENT ACTIVITY                       */}
       {/* ========================================================= */}
-      <View>
+      <View className="mb-8">
         {isOnline ? (
           <TouchableOpacity 
             activeOpacity={0.9}
@@ -267,12 +267,12 @@ export default function DashboardIndividual({ driverStatus, isLocked, balance }:
             <Text className="text-sm font-bold text-slate-500">Ketuk untuk membuka Radar Penuh.</Text>
           </TouchableOpacity>
         ) : (
-          <View className="glass-card bg-white/60 rounded-[2rem] p-6 items-center border-dashed border-2 border-slate-200">
-            <View className="w-16 h-16 bg-slate-100 rounded-full items-center justify-center mb-4 border border-white">
+          <View className="bg-white rounded-[2rem] p-6 items-center border border-slate-100" style={{ elevation: 3, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8 }}>
+            <View className="w-16 h-16 bg-slate-50 rounded-full items-center justify-center mb-4 border border-slate-200">
               <Power color="#94a3b8" size={24} />
             </View>
             <Text className="text-lg font-black text-slate-800 mb-1 tracking-tight">Anda Sedang Offline</Text>
-            <Text className="text-xs font-bold text-slate-500 text-center">
+            <Text className="text-xs font-bold text-slate-500 text-center px-4">
               {isLocked ? "Selesaikan pendaftaran untuk menerima order." : "Geser tombol ke Online untuk mulai menerima penawaran order."}
             </Text>
           </View>
@@ -280,86 +280,75 @@ export default function DashboardIndividual({ driverStatus, isLocked, balance }:
       </View>
 
       {/* ========================================================= */}
-      {/* SECTION 3: DOMPET & PENDAPATAN (3D PREMIUM CARD)          */}
+      {/* SECTION 3: DOMPET & PENDAPATAN (GOJEK/GRAB STYLE)           */}
       {/* ========================================================= */}
       <View 
-        className="rounded-[2.5rem] overflow-hidden"
-        style={{ elevation: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 15 }, shadowOpacity: 0.3, shadowRadius: 25 }}
+        className="bg-[#9A242B] rounded-[2rem] p-6 mb-8 relative overflow-hidden"
+        style={{ elevation: 10, shadowColor: '#7A171D', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12 }}
       >
-        <LinearGradient
-          colors={['#1e293b', '#0f172a']}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          className="p-7 relative border border-slate-700/50"
-          style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' }}
-        >
-          <View className="absolute top-0 right-0 w-40 h-40 bg-[#C5A059]/10 rounded-full" />
-          <View className="absolute -bottom-10 -left-10 w-32 h-32 bg-[#7A171D]/30 rounded-full blur-xl" />
-          
-          <View className="flex-row justify-between items-start mb-8 relative z-10">
-            <View>
-              <Text className="text-slate-400 text-xs font-black uppercase tracking-widest mb-1.5">Saldo Tersedia</Text>
-              <Text className="text-4xl font-black text-white tracking-tight">
-                <Text className="text-xl text-slate-400">Rp </Text>
+        {/* Dekorasi simpel lingkaran */}
+        <View className="absolute -right-8 -top-8 w-32 h-32 bg-white/10 rounded-full" />
+        <View className="absolute right-12 top-12 w-16 h-16 bg-white/5 rounded-full" />
+        
+        <View className="flex-row justify-between items-center mb-6">
+          <View>
+            <Text className="text-white/80 text-[11px] font-black uppercase tracking-widest mb-1">Saldo Anda</Text>
+            <View className="flex-row items-end gap-1">
+              <Text className="text-white/70 text-lg font-bold mb-1">Rp</Text>
+              <Text className="text-3xl font-black text-white tracking-tight">
                 {balance.toLocaleString('id-ID')}
               </Text>
             </View>
-            <View className="w-14 h-14 bg-white/10 rounded-[1.25rem] items-center justify-center border border-white/20" style={{ elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10 }}>
-              <Wallet color="#C5A059" size={26} />
-            </View>
           </View>
+          <View className="w-12 h-12 bg-white/20 rounded-full items-center justify-center">
+            <Wallet color="#FFFFFF" size={24} />
+          </View>
+        </View>
 
-          <View className="flex-row gap-3 relative z-10">
-            <TouchableOpacity 
-              activeOpacity={0.8}
-              onPress={() => router.push('/(tabs)/wallet')}
-              className="flex-1 rounded-[1.5rem] overflow-hidden"
-              style={{ elevation: 8, shadowColor: '#C5A059', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 10 }}
-            >
-              <LinearGradient
-                colors={['#D4B371', '#C5A059']}
-                start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
-                className="py-4 items-center border border-[#E2C68A]/30"
-                style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.4)' }}
-              >
-                <Text className="text-white text-sm font-black tracking-wide">Tarik Dana</Text>
-              </LinearGradient>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              activeOpacity={0.8}
-              onPress={() => router.push('/(tabs)/wallet')}
-              className="flex-1 bg-white/10 py-4 rounded-[1.5rem] items-center border border-white/20"
-            >
-              <Text className="text-white text-sm font-bold tracking-wide">Riwayat Saldo</Text>
-            </TouchableOpacity>
-          </View>
-        </LinearGradient>
+        <View className="flex-row gap-3">
+          <TouchableOpacity 
+            activeOpacity={0.8}
+            onPress={() => router.push('/(tabs)/wallet')}
+            className="flex-1 bg-white py-3.5 rounded-[1.25rem] items-center"
+            style={{ elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}
+          >
+            <Text className="text-[#9A242B] text-sm font-black tracking-wide">Tarik Dana</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            activeOpacity={0.8}
+            onPress={() => router.push('/(tabs)/wallet')}
+            className="flex-1 bg-[#7A171D] py-3.5 rounded-[1.25rem] items-center border border-[#5A0E13]"
+          >
+            <Text className="text-white text-sm font-bold tracking-wide">Riwayat</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* ========================================================= */}
       {/* SECTION 4: METRIK HARI INI                                */}
       {/* ========================================================= */}
-      <View>
+      <View className="mb-8">
         <Text className="text-sm font-black text-slate-800 tracking-tight mb-3 px-2">Ringkasan Hari Ini</Text>
         
         <View className="flex-row gap-4">
-          <View className="flex-1 glass-card bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm">
-            <View className="w-10 h-10 rounded-xl bg-blue-50 items-center justify-center mb-3 border border-blue-100">
-              <Package color="#2563eb" size={20} />
+          <View className="flex-1 bg-white p-5 rounded-[2rem] border border-slate-100" style={{ elevation: 4, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8 }}>
+            <View className="w-12 h-12 rounded-2xl bg-blue-50 items-center justify-center mb-4">
+              <Package color="#2563eb" size={24} />
             </View>
             <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pesanan Selesai</Text>
-            <Text className="text-2xl font-black text-slate-900 mt-1 tracking-tight">
-              {isLoadingHistory ? "-" : todayCount} <Text className="text-xs text-slate-400">Order</Text>
+            <Text className="text-3xl font-black text-slate-900 mt-1 tracking-tight">
+              {isLoadingHistory ? "-" : todayCount} <Text className="text-sm font-bold text-slate-400">Order</Text>
             </Text>
           </View>
           
-          <View className="flex-1 glass-card bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm">
-            <View className="w-10 h-10 rounded-xl bg-emerald-50 items-center justify-center mb-3 border border-emerald-100">
-              <TrendingUp color="#10b981" size={20} />
+          <View className="flex-1 bg-white p-5 rounded-[2rem] border border-slate-100" style={{ elevation: 4, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8 }}>
+            <View className="w-12 h-12 rounded-2xl bg-emerald-50 items-center justify-center mb-4">
+              <TrendingUp color="#10b981" size={24} />
             </View>
             <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tingkat Sukses</Text>
-            <Text className="text-2xl font-black text-slate-900 mt-1 tracking-tight">
-              100<Text className="text-xs text-slate-400">%</Text>
+            <Text className="text-3xl font-black text-slate-900 mt-1 tracking-tight">
+              100<Text className="text-sm font-bold text-slate-400">%</Text>
             </Text>
           </View>
         </View>
@@ -368,7 +357,7 @@ export default function DashboardIndividual({ driverStatus, isLocked, balance }:
       {/* ========================================================= */}
       {/* SECTION 5: RIWAYAT TERBARU                                */}
       {/* ========================================================= */}
-      <View>
+      <View className="mb-8">
         <View className="flex-row items-center justify-between mb-3 px-2 mt-4">
           <View className="flex-row items-center gap-2">
             <History color="#7A171D" size={16} />
@@ -408,26 +397,28 @@ export default function DashboardIndividual({ driverStatus, isLocked, balance }:
                 <TouchableOpacity 
                   key={order.id} 
                   activeOpacity={0.8}
-                  className="glass-card bg-white p-4 rounded-[1.5rem] flex-row items-center gap-4 shadow-sm border border-slate-100"
+                  onPress={() => router.push(`/awb/${order.id}`)}
+                  className="bg-white p-5 rounded-[1.5rem] flex-row items-center gap-4 border border-slate-100 mb-3"
+                  style={{ elevation: 3, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 5 }}
                 >
-                  <View className="bg-emerald-50 w-12 h-12 rounded-[1rem] items-center justify-center border border-emerald-100">
-                    <CheckCircle2 color="#10b981" size={20} />
+                  <View className="bg-emerald-50 w-12 h-12 rounded-2xl items-center justify-center">
+                    <CheckCircle2 color="#10b981" size={24} />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-xs font-black text-slate-800 mb-1 tracking-tight" numberOfLines={1}>{destAddr}</Text>
+                    <Text className="text-sm font-black text-slate-800 mb-1 tracking-tight" numberOfLines={1}>{destAddr}</Text>
                     <View className="flex-row items-center gap-2">
                       <View className="bg-slate-100 px-2 py-0.5 rounded-md">
-                        <Text className="text-[9px] text-slate-400 font-bold uppercase">#{order.id.substring(0,6)}</Text>
+                        <Text className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">#{order.id.substring(0,6)}</Text>
                       </View>
                       <View className="w-1 h-1 bg-slate-300 rounded-full" />
                       <View className="flex-row items-center gap-1">
-                        <Clock color="#64748b" size={10} />
-                        <Text className="text-[10px] text-slate-500 font-bold">{dateStr}</Text>
+                        <Clock color="#64748b" size={12} />
+                        <Text className="text-[11px] text-slate-500 font-bold">{dateStr}</Text>
                       </View>
                     </View>
                   </View>
                   <View className="items-end">
-                    <Text className="text-sm font-black text-emerald-600 tracking-tight">+{formatRupiah(earned)}</Text>
+                    <Text className="text-base font-black text-emerald-600 tracking-tight">+{formatRupiah(earned)}</Text>
                   </View>
                 </TouchableOpacity>
               );

@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { collection, query, where, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useUIStore } from "@/store/useUIStore";
 import { OrderDetail } from "@/types/order";
 import { CheckCircle2, Clock, Package, Truck, AlertTriangle, History } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 const formatRupiah = (val: number) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(val || 0);
 
@@ -32,6 +34,28 @@ export default function DriverOrdersPage() {
   const [activeOrders, setActiveOrders] = useState<OrderDetail[]>([]);
   const [historyOrders, setHistoryOrders] = useState<OrderDetail[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Scroll state for Header auto-hide
+  const setHeaderVisible = useUIStore(s => s.setHeaderVisible);
+  const lastScrollY = React.useRef(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      setHeaderVisible(true);
+    }, [setHeaderVisible])
+  );
+
+  const handleScroll = (event: any) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    if (currentScrollY <= 0) {
+      setHeaderVisible(true);
+    } else if (currentScrollY > lastScrollY.current + 5) {
+      setHeaderVisible(false); // scroll down
+    } else if (currentScrollY < lastScrollY.current - 5) {
+      setHeaderVisible(true); // scroll up
+    }
+    lastScrollY.current = currentScrollY;
+  };
 
   // Jika user adalah vendor, arahkan ke fleet atau tampilkan pesan bahwa halaman ini untuk Mandiri
   useEffect(() => {
@@ -87,82 +111,94 @@ export default function DriverOrdersPage() {
     const isFailed = order.status === "Batal" || order.status === "Gagal";
 
     return (
-      <View 
+      <Animated.View 
         key={order.id} 
-        style={isActive ? {
-          elevation: 10,
-          shadowColor: '#10b981',
-          shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.3,
-          shadowRadius: 10
-        } : {
-          elevation: 3,
-          shadowColor: '#94a3b8',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 5
-        }}
+        entering={FadeInDown.delay(idx * 100).springify()}
+        style={{ marginBottom: isActive ? 16 : 12 }}
       >
-        <TouchableOpacity
-          activeOpacity={0.8}
-          // onPress={() => router.push(`/(tabs)/awb/${order.id}`)} // Placeholder AWB
-          className={`rounded-[1.5rem] flex-col overflow-hidden border ${isActive ? "border-emerald-300 bg-white" : "border-slate-200 bg-white"}`}
-        >
-          <LinearGradient
-            colors={isActive ? ['#ecfdf5', '#d1fae5'] : ['#ffffff', '#f8fafc']}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            className="p-5 gap-3"
-            style={isActive ? { borderTopWidth: 2, borderTopColor: 'rgba(255,255,255,0.8)' } : { borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,1)' }}
+        {isActive ? (
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => router.push(`/awb/${order.id}`)}
+            className="rounded-2xl flex-col bg-white overflow-hidden border border-emerald-100 border-l-[6px] border-l-emerald-500"
+            style={{
+              elevation: 6,
+              shadowColor: '#10b981',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.15,
+              shadowRadius: 8
+            }}
           >
-          {isActive && (
-            <View className="absolute top-0 right-0 w-24 h-24 bg-emerald-400/20 rounded-full blur-md" />
-          )}
-
-          <View className="flex-row justify-between items-center relative z-10">
-            <View className="flex-row items-center gap-2">
-              <View className={`px-2.5 py-1 rounded-md ${
-                isActive ? "bg-emerald-100" : 
-                isSuccess ? "bg-blue-50" : 
-                isFailed ? "bg-red-50" : "bg-slate-100"
-              }`}>
-                <Text className={`text-[9px] font-black uppercase tracking-widest ${
-                  isActive ? "text-emerald-700" : 
-                  isSuccess ? "text-blue-600" : 
-                  isFailed ? "text-red-600" : "text-slate-600"
-                }`}>
-                  {order.status}
-                </Text>
+            <View className="p-4 gap-3 relative">
+              <View className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full" />
+              
+              <View className="flex-row justify-between items-center relative z-10">
+                <View className="flex-row items-center gap-2">
+                  <View className="px-2.5 py-1 rounded-md bg-emerald-100">
+                    <Text className="text-[9px] font-black uppercase tracking-widest text-emerald-700">
+                      {order.status}
+                    </Text>
+                  </View>
+                  <View className="bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
+                    <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">#{order.id.substring(0,8)}</Text>
+                  </View>
+                </View>
+                <View className="flex-row items-center gap-1">
+                  <Clock size={12} color="#64748b" />
+                  <Text className="text-[10px] text-slate-500 font-bold">{dateStr}</Text>
+                </View>
               </View>
-              <View className="bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100">
-                <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">#{order.id.substring(0,8)}</Text>
+
+              <View className="flex-row gap-3 relative z-10 mt-2">
+                <View className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-emerald-50">
+                  <Truck size={24} color="#059669" />
+                </View>
+                <View className="flex-1 justify-center">
+                   <Text className="text-sm font-black text-slate-800 leading-snug tracking-tight mb-0.5" numberOfLines={2}>{destAddr}</Text>
+                   <Text className="text-[15px] font-black text-emerald-600 tracking-tight">{formatRupiah(earned)}</Text>
+                </View>
               </View>
             </View>
-            <View className="flex-row items-center gap-1">
-              <Clock size={12} color="#64748b" />
-              <Text className="text-[10px] text-slate-500 font-bold">{dateStr}</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            activeOpacity={0.8}
+            onPress={() => router.push(`/awb/${order.id}`)}
+            className="bg-white p-5 rounded-[1.5rem] flex-row items-center gap-4 border border-slate-100"
+            style={{
+              elevation: 3,
+              shadowColor: '#94a3b8',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 5
+            }}
+          >
+            <View className={`w-12 h-12 rounded-2xl items-center justify-center ${
+              isSuccess ? 'bg-emerald-50' : 'bg-red-50'
+            }`}>
+              {isSuccess ? <CheckCircle2 color="#10b981" size={24} /> : <AlertTriangle color="#dc2626" size={24} />}
             </View>
-          </View>
-
-          <View className="flex-row gap-4 relative z-10 mt-3">
-            <View className={`w-12 h-12 rounded-[1.25rem] flex items-center justify-center shrink-0 border-2 ${
-              isActive ? "bg-emerald-100 border-emerald-200" : 
-              isSuccess ? "bg-blue-50 border-blue-100" : 
-              isFailed ? "bg-red-50 border-red-100" : "bg-slate-50 border-slate-200"
-            }`} style={isActive ? { elevation: 5, shadowColor: '#10b981', shadowOpacity: 0.2, shadowRadius: 5 } : {}}>
-              {isActive ? <Truck size={24} color="#059669" /> : 
-               isSuccess ? <CheckCircle2 size={24} color="#2563eb" /> : 
-               isFailed ? <AlertTriangle size={24} color="#dc2626" /> : 
-               <Package size={24} color="#475569" />}
+            <View className="flex-1">
+              <Text className="text-sm font-black text-slate-800 mb-1 tracking-tight" numberOfLines={1}>{destAddr}</Text>
+              <View className="flex-row items-center gap-2">
+                <View className="bg-slate-100 px-2 py-0.5 rounded-md">
+                  <Text className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">#{order.id.substring(0,6)}</Text>
+                </View>
+                <View className="w-1 h-1 bg-slate-300 rounded-full" />
+                <View className="flex-row items-center gap-1">
+                  <Clock color="#64748b" size={12} />
+                  <Text className="text-[11px] text-slate-500 font-bold">{dateStr}</Text>
+                </View>
+              </View>
             </View>
-            
-            <View className="flex-1 overflow-hidden">
-               <Text className="text-sm font-black text-slate-800 leading-snug tracking-tight mb-1" numberOfLines={2}>{destAddr}</Text>
-               <Text className="text-lg font-black text-emerald-600 tracking-tight">{formatRupiah(earned)}</Text>
+            <View className="items-end">
+              <Text className={`text-base font-black tracking-tight ${isSuccess ? 'text-emerald-600' : 'text-slate-400 line-through'}`}>
+                {isSuccess ? '+' : ''}{formatRupiah(earned)}
+              </Text>
             </View>
-          </View>
-          </LinearGradient>
-        </TouchableOpacity>
-      </View>
+          </TouchableOpacity>
+        )}
+      </Animated.View>
     );
   };
 
@@ -173,24 +209,25 @@ export default function DriverOrdersPage() {
   return (
     <View className="flex-1 bg-slate-50">
       <ScrollView 
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 110, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       >
         
         {/* TAB SWITCHER (GEN-Z CAPSULE) */}
         <View 
-          className="bg-slate-200 p-1.5 rounded-[2.5rem] flex-row items-center mb-6"
-          style={{ elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, borderWidth: 1, borderColor: '#cbd5e1' }}
+          className="bg-slate-100 p-1.5 rounded-full flex-row items-center mb-6 border border-slate-200"
         >
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => setActiveTab("Active")}
-            className={`flex-1 py-4 items-center justify-center rounded-[2rem] ${
-              activeTab === "Active" ? "bg-[#7A171D] border-2 border-[#5A0E13]" : "bg-transparent border-2 border-transparent"
+            className={`flex-1 py-3.5 items-center justify-center rounded-full ${
+              activeTab === "Active" ? "bg-[#7A171D]" : "bg-transparent"
             }`}
-            style={activeTab === "Active" ? { elevation: 8, shadowColor: '#7A171D', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 8, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)' } : {}}
+            style={activeTab === "Active" ? { elevation: 4, shadowColor: '#7A171D', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 6 } : {}}
           >
-            <Text className={`text-sm font-black ${
+            <Text className={`text-[13px] font-black tracking-wide ${
               activeTab === "Active" ? "text-white" : "text-slate-500"
             }`}>
               Sedang Berjalan
@@ -199,12 +236,12 @@ export default function DriverOrdersPage() {
           <TouchableOpacity
             activeOpacity={0.8}
             onPress={() => setActiveTab("History")}
-            className={`flex-1 py-4 items-center justify-center rounded-[2rem] ${
-              activeTab === "History" ? "bg-white border-2 border-slate-300" : "bg-transparent border-2 border-transparent"
+            className={`flex-1 py-3.5 items-center justify-center rounded-full ${
+              activeTab === "History" ? "bg-white" : "bg-transparent"
             }`}
-            style={activeTab === "History" ? { elevation: 8, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 8, borderTopWidth: 1, borderTopColor: '#ffffff' } : {}}
+            style={activeTab === "History" ? { elevation: 4, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 6 } : {}}
           >
-            <Text className={`text-sm font-black ${
+            <Text className={`text-[13px] font-black tracking-wide ${
               activeTab === "History" ? "text-slate-800" : "text-slate-500"
             }`}>
               Riwayat Selesai
@@ -220,13 +257,16 @@ export default function DriverOrdersPage() {
           <View className="space-y-4">
             {activeTab === "Active" && (
               activeOrders.length === 0 ? (
-                <View 
-                  className="glass-card p-10 rounded-[2rem] items-center justify-center border-dashed border-2 border-slate-200 mt-10"
+                <Animated.View 
+                  entering={FadeInDown.springify()}
+                  className="bg-white p-10 rounded-3xl items-center justify-center border-dashed border-2 border-slate-200 mt-10"
                 >
-                  <Truck size={48} color="#cbd5e1" className="mb-3" />
-                  <Text className="text-sm font-black text-slate-800 tracking-tight mt-3">Tidak Ada Order Aktif</Text>
-                  <Text className="text-xs font-medium text-slate-500 mt-1">Buka Radar untuk mencari order baru.</Text>
-                </View>
+                  <View className="w-20 h-20 bg-slate-50 rounded-full items-center justify-center mb-4 border border-slate-100">
+                    <Truck size={40} color="#94a3b8" />
+                  </View>
+                  <Text className="text-[15px] font-black text-slate-800 tracking-tight text-center">Tidak Ada Order Aktif</Text>
+                  <Text className="text-xs font-medium text-slate-500 mt-1.5 text-center">Buka Radar untuk mencari order baru.</Text>
+                </Animated.View>
               ) : (
                 activeOrders.map((order, idx) => renderOrderCard(order, idx, true))
               )
@@ -234,13 +274,16 @@ export default function DriverOrdersPage() {
 
             {activeTab === "History" && (
               historyOrders.length === 0 ? (
-                <View 
-                  className="glass-card p-10 rounded-[2rem] items-center justify-center border-dashed border-2 border-slate-200 mt-10"
+                <Animated.View 
+                  entering={FadeInDown.springify()}
+                  className="bg-white p-10 rounded-3xl items-center justify-center border-dashed border-2 border-slate-200 mt-10"
                 >
-                  <History size={48} color="#cbd5e1" className="mb-3" />
-                  <Text className="text-sm font-black text-slate-800 tracking-tight mt-3">Riwayat Kosong</Text>
-                  <Text className="text-xs font-medium text-slate-500 mt-1">Anda belum menyelesaikan order apapun.</Text>
-                </View>
+                  <View className="w-20 h-20 bg-slate-50 rounded-full items-center justify-center mb-4 border border-slate-100">
+                    <History size={40} color="#94a3b8" />
+                  </View>
+                  <Text className="text-[15px] font-black text-slate-800 tracking-tight text-center">Riwayat Kosong</Text>
+                  <Text className="text-xs font-medium text-slate-500 mt-1.5 text-center">Anda belum menyelesaikan order apapun.</Text>
+                </Animated.View>
               ) : (
                 historyOrders.map((order, idx) => renderOrderCard(order, idx, false))
               )

@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, Alert, Modal } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, Alert } from "react-native";
 import { useRouter } from "expo-router";
-import * as ImagePicker from "expo-image-picker";
-import * as Clipboard from "expo-clipboard";
 import { db } from "@/lib/firebase";
-import { doc, collection, addDoc, serverTimestamp, query, where, onSnapshot, getDoc, writeBatch, increment } from "firebase/firestore";
+import { doc, collection, query, where, onSnapshot, getDoc, writeBatch, increment, addDoc, serverTimestamp } from "firebase/firestore";
 import { useAuthStore } from "@/store/useAuthStore";
-import { uploadToCloudinary } from "@/lib/cloudinary";
 import { 
-  Wallet, ArrowDownCircle, ArrowUpCircle, CheckCircle2, AlertCircle, 
-  ShieldAlert, ArrowLeft, Banknote, Building2, QrCode, Copy, X, Smartphone, Upload
+  Wallet, ArrowDownCircle, ArrowUpCircle,
+  ShieldAlert, Banknote, Building2, QrCode, Copy, Smartphone
 } from "lucide-react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from "react-native-reanimated";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 
@@ -57,8 +52,9 @@ interface PaymentConfig {
 }
 
 export default function MobileWalletPage() {
-  const router = useRouter();
+
   const { user, isHydrated } = useAuthStore();
+  const router = useRouter();
 
   const [balance, setBalance] = useState<number>(0);
   const [vendorName, setVendorName] = useState<string>("");
@@ -71,21 +67,7 @@ export default function MobileWalletPage() {
   
   const historyLogs = [...withdrawLogs, ...topupLogs, ...mutationLogs].sort((a, b) => getSafeMillis(b.timestamp) - getSafeMillis(a.timestamp));
   
-  const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null); 
-  
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [showTopupModal, setShowTopupModal] = useState(false); 
-
-  const [withdrawMethod, setWithdrawMethod] = useState<"Manual_Bank" | "DANA_API">("Manual_Bank");
-  const [withdrawAmount, setWithdrawAmount] = useState<string>("");
-  const [wdBankName, setWdBankName] = useState("");
-  const [wdAccountNumber, setWdAccountNumber] = useState("");
-  const [wdAccountName, setWdAccountName] = useState("");
-
-  const [topupAmount, setTopupAmount] = useState<string>("");
-  const [topupImageUri, setTopupImageUri] = useState<string | null>(null);
-
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentConfig, setPaymentConfig] = useState<PaymentConfig | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -156,141 +138,7 @@ export default function MobileWalletPage() {
     };
   }, [user]);
 
-  const handleWithdrawRequest = async () => {
-    if (!user || !withdrawAmount) return;
-
-    const amount = Number(withdrawAmount);
-    if (amount < 50000) return Alert.alert("Peringatan", "Minimal penarikan adalah Rp 50.000");
-    if (amount > balance) return Alert.alert("Peringatan", "Saldo tidak mencukupi.");
-
-    if (withdrawMethod === "Manual_Bank") {
-      if (!wdBankName.trim() || !wdAccountNumber.trim() || !wdAccountName.trim()) {
-        return Alert.alert("Peringatan", "Lengkapi data rekening bank Anda.");
-      }
-    } else {
-      if (!wdAccountNumber.trim()) {
-        return Alert.alert("Peringatan", "Masukkan nomor HP DANA Anda.");
-      }
-      if (wdAccountNumber.length < 9) return Alert.alert("Peringatan", "Nomor DANA tidak valid.");
-    }
-
-    setIsProcessing(true);
-    try {
-      const payload: Record<string, unknown> = {
-        driverId: user.uid,
-        amount: amount,
-        status: "Pending",
-        timestamp: serverTimestamp(),
-        method: withdrawMethod,
-        accountNumber: wdAccountNumber
-      };
-
-      if (withdrawMethod === "Manual_Bank") {
-        payload.bankName = wdBankName;
-        payload.accountName = wdAccountName;
-      }
-
-      // CALL DANA API if selected
-      if (withdrawMethod === "DANA_API") {
-        const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL || "https://flashglobalslogistik.com";
-        const response = await fetch(`${baseUrl}/api/dana/balance-disbursement`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            amount: amount.toString(),
-            userId: user.uid,
-            userName: user.displayName || "Sopir",
-            phoneNumber: wdAccountNumber
-          })
-        });
-
-        const data = await response.json();
-        
-        if (!response.ok || !data.success) {
-          throw new Error(data.message || "Gagal menghubungi API DANA.");
-        }
-        
-        // If success, we change status to Processing/Success based on API logic
-        // The DANA API usually takes care of the deduction on the server side via admin SDK,
-        // But let's assume we still need to record the withdrawal request as Success
-        payload.status = "Success";
-      }
-
-      const batch = writeBatch(db);
-      const newWithdrawRef = doc(collection(db, "withdrawal_requests"));
-      batch.set(newWithdrawRef, payload);
-
-      const walletRef = doc(db, "driver_wallets", user.uid);
-      batch.update(walletRef, {
-        balance: increment(-amount),
-        lastMutasi: serverTimestamp()
-      });
-
-      await batch.commit();
-
-      Alert.alert("Sukses", withdrawMethod === "DANA_API" ? "Penarikan ke DANA berhasil diproses!" : "Pengajuan penarikan dana manual berhasil dikirim!");
-      setShowWithdrawModal(false);
-      setWithdrawAmount("");
-      setWdBankName("");
-      setWdAccountNumber("");
-      setWdAccountName("");
-    } catch (error: any) {
-      console.error("Withdrawal Error:", error);
-      Alert.alert("Gagal", error.message || "Gagal mengirim pengajuan penarikan.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const handlePickTopupImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert("Izin Ditolak", "Butuh izin akses galeri untuk unggah bukti.");
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.7,
-    });
-    if (!result.canceled && result.assets.length > 0) {
-      setTopupImageUri(result.assets[0].uri);
-    }
-  };
-
-  const handleTopupSubmit = async () => {
-    if (!user || !topupAmount) return;
-    if (!topupImageUri) return Alert.alert("Peringatan", "Harap unggah bukti transfer/pembayaran.");
-    
-    const amount = Number(topupAmount);
-    if (amount < 20000) return Alert.alert("Peringatan", "Minimal Top-Up adalah Rp 20.000");
-
-    setIsProcessing(true);
-    try {
-      const finalProofUrl = await uploadToCloudinary(topupImageUri);
-
-      await addDoc(collection(db, "deposit_requests"), {
-        userId: user.uid,
-        clientName: user.displayName || "Sopir Flash Global",
-        amount: amount,
-        proofUrl: finalProofUrl,
-        status: "Pending",
-        createdAt: serverTimestamp() 
-      });
-
-      Alert.alert("Sukses", "Pengajuan Top-Up berhasil! Menunggu verifikasi tim Finance.");
-      setTopupAmount("");
-      setTopupImageUri(null);
-      setShowTopupModal(false);
-    } catch (error) {
-      console.error(error);
-      Alert.alert("Error", "Gagal memproses pengajuan Top-Up.");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+  const _handleTopupSubmit = async () => { /* dipindah ke topup.tsx */ };
 
   const getStatusBadgeColor = (status: string) => {
     if (status === "Disetujui" || status === "Success") return "bg-emerald-50 border-emerald-200 text-emerald-600";
@@ -320,358 +168,203 @@ export default function MobileWalletPage() {
   return (
     <View className="flex-1 bg-slate-50">
       
-      {/* HEADER CARD (CREDIT CARD STYLE) */}
-      <View 
-        className="rounded-b-[3rem] px-6 pt-16 pb-20 overflow-hidden relative z-10"
-        style={{ elevation: 15, shadowColor: isVendor ? '#1e3a8a' : '#7a171d', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20 }}
-      >
-        <LinearGradient
-          colors={isVendor ? ['#1e3a8a', '#3b82f6'] : ['#450a0a', '#9A242B']}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          className="absolute inset-0"
-        />
-        <View className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full blur-2xl" />
-        <View className="absolute -bottom-10 -left-10 w-32 h-32 bg-black/20 rounded-full blur-xl" />
-
-        <View className="flex-row items-center justify-between mb-8 z-10 relative">
-          <View className="flex-row items-center gap-2 bg-white/20 px-4 py-2.5 rounded-[1.25rem] border border-white/30" style={{ elevation: 5, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 5 }}>
-            <Wallet size={16} color="#FFF" />
-            <Text className="text-[10px] font-black text-white uppercase tracking-widest">Dompet Digital</Text>
-          </View>
-        </View>
-
-        <View className="items-start justify-center z-10 relative">
-          <Text className="text-[10px] font-black text-white/70 uppercase tracking-widest mb-1.5">Total Saldo Tersedia</Text>
-          <View className="flex-row items-start justify-center gap-2">
-            <Text className="text-3xl font-bold text-white/70 mt-1">Rp</Text>
-            <Text className="text-5xl font-black text-white tracking-tighter">{balance.toLocaleString('id-ID')}</Text>
-          </View>
-
-          {partnerType === "FleetDriver" && vendorName && (
-            <View className="mt-4 flex-row items-center gap-2 bg-white/20 border border-white/30 px-4 py-2.5 rounded-[1.25rem]">
-              <ShieldAlert size={16} color="#fcd34d" />
-              <Text className="text-xs font-black text-amber-300 tracking-tight">Akses PT {vendorName}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* FLOATING ACTIONS */}
-      <View className="flex-row px-6 -mt-8 z-20 gap-4 mb-4">
-        <TouchableOpacity 
-          onPress={() => setShowWithdrawModal(true)}
-          activeOpacity={0.8}
-          className="flex-1 bg-white border border-slate-200 rounded-[1.5rem] py-4 items-center justify-center"
-          style={{ elevation: 8, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.2, shadowRadius: 10 }}
-        >
-          <View className={`w-12 h-12 rounded-[1.25rem] mb-2 items-center justify-center border ${isVendor ? 'bg-blue-50 border-blue-100' : 'bg-red-50 border-red-100'}`}>
-             <ArrowDownCircle size={24} color={isVendor ? "#2563eb" : "#7a171d"} />
-          </View>
-          <Text className="text-sm font-black text-slate-800 tracking-tight">Tarik Tunai</Text>
-        </TouchableOpacity>
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
         
-        <TouchableOpacity 
-          onPress={() => setShowTopupModal(true)}
-          activeOpacity={0.8}
-          className="flex-1 rounded-[1.5rem] py-4 items-center justify-center overflow-hidden"
-          style={{ elevation: 8, shadowColor: '#C5A059', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 10 }}
-        >
-          <LinearGradient 
-            colors={['#DFBE7B', '#C5A059']} 
-            start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
-            className="absolute inset-0 border border-[#E2C68A]/50" 
-            style={{ borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.4)' }}
-          />
-          <View className="w-12 h-12 rounded-[1.25rem] bg-white/20 border border-white/30 items-center justify-center mb-2 z-10" style={{ elevation: 5, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5 }}>
-            <ArrowUpCircle size={24} color="#FFF" />
-          </View>
-          <Text className="text-sm font-black text-white tracking-tight z-10">Isi Saldo</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* TRANSACTION HISTORY */}
-      <ScrollView className="flex-1 px-5 pt-2 pb-32" showsVerticalScrollIndicator={false}>
-        <Text className="text-sm font-black text-slate-800 tracking-tight mb-4 ml-1">Riwayat Transaksi</Text>
-
-        <View className="space-y-3 pb-24">
-          {historyLogs.length === 0 ? (
-            <View className="bg-white/40 border border-slate-200 border-dashed rounded-[2rem] p-10 items-center">
-              <View className="w-16 h-16 bg-slate-100 rounded-[1.25rem] items-center justify-center mb-4">
-                <Banknote size={32} color="#cbd5e1" />
+        {/* 1. RICH HEADER & HERO CARD (DANA/ShopeePay Vibe) */}
+        <View className="px-5 pt-14 pb-8 bg-slate-50 relative z-10">
+          
+          {/* Top Header Row */}
+          <Animated.View entering={FadeInDown.duration(400)} className="flex-row items-center justify-between mb-6">
+            <View className="flex-row items-center gap-3">
+              <View className="w-12 h-12 bg-red-100 rounded-full items-center justify-center border-2 border-red-200">
+                <Text className="text-lg font-black text-[#7a171d]">{user?.displayName?.[0] || 'D'}</Text>
               </View>
-              <Text className="text-sm font-black text-slate-800 tracking-tight mb-1">Brankas Kosong</Text>
-              <Text className="text-xs font-medium text-slate-500 text-center">Belum ada riwayat penarikan maupun pengisian saldo.</Text>
-            </View>
-          ) : (
-            historyLogs.map(log => {
-              const millis = getSafeMillis(log.timestamp);
-              const dateStr = millis > 0 ? new Date(millis).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Baru saja";
-              const isIncome = log.type === "TopUp" || log.type === "Income";
-
-              return (
-                <View 
-                  key={log.id} 
-                  className="bg-white p-4 rounded-[1.5rem] border border-slate-100 flex-row items-center justify-between overflow-hidden relative mb-3"
-                  style={{ elevation: 2, shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4 }}
-                >
-                  <View className={`absolute left-0 top-0 bottom-0 w-1.5 ${log.status === 'Disetujui' || log.status === 'Success' ? 'bg-emerald-500' : log.status === 'Ditolak' ? 'bg-red-500' : log.status === 'Processing' ? 'bg-blue-500' : 'bg-amber-400'}`} />
-                  
-                  <View className="flex-1 pl-3 pr-2 flex-row items-center gap-3">
-                    <View className={`w-10 h-10 rounded-xl items-center justify-center shrink-0 border ${isIncome ? 'bg-emerald-50 border-emerald-100' : isVendor ? 'bg-blue-50 border-blue-100' : 'bg-red-50 border-red-100'}`}>
-                       {isIncome ? <ArrowUpCircle size={20} color="#10b981" /> : <ArrowDownCircle size={20} color={isVendor ? "#2563eb" : "#7a171d"} />}
-                    </View>
-                    <View className="flex-1">
-                      <Text className="text-sm font-black text-slate-800 tracking-tight leading-snug mb-0.5" numberOfLines={1}>{log.description || (isIncome ? 'Pendapatan Saldo' : 'Potongan Saldo')}</Text>
-                      <Text className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{dateStr}</Text>
-                    </View>
-                  </View>
-                  
-                  <View className="items-end gap-1.5 shrink-0">
-                    <Text className={`text-base font-black tracking-tight ${isIncome ? 'text-emerald-600' : isVendor ? 'text-blue-600' : 'text-[#7a171d]'}`}>
-                      {isIncome ? '+' : '-'} {formatRupiah(log.amount)}
-                    </Text>
-                    <View className={`px-2 py-0.5 border rounded-md ${getStatusBadgeColor(log.status)}`}>
-                      <Text className={`text-[9px] font-black uppercase tracking-wider ${getStatusTextColor(log.status)}`}>
-                        {log.status === "Pending" ? "Menunggu" : log.status === "Processing" ? "Proses Bank" : log.status === "Success" ? "Selesai" : log.status}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              );
-            })
-          )}
-        </View>
-      </ScrollView>
-
-      {/* WITHDRAW MODAL */}
-      <Modal visible={showWithdrawModal} animationType="slide" transparent={true}>
-        <View className="flex-1 justify-end bg-slate-900/60">
-          <View className="bg-white rounded-t-[2.5rem] w-full max-h-[85vh]">
-            <View className="w-full items-center pt-3 pb-1">
-              <View className="w-12 h-1.5 bg-slate-300 rounded-full" />
-            </View>
-
-            <View className="px-6 py-4 flex-row items-center justify-between border-b border-slate-100">
               <View>
-                <View className="flex-row items-center gap-2">
-                  <ArrowDownCircle size={20} color={isVendor ? "#2563eb" : "#7a171d"} />
-                  <Text className="text-xl font-black text-slate-900 tracking-tight">Penarikan Dana</Text>
-                </View>
-                <Text className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Tarik Saldo ke Rekening</Text>
+                <Text className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selamat Datang,</Text>
+                <Text className="text-base font-black text-slate-800 tracking-tight">{user?.displayName || 'Driver Flash'}</Text>
               </View>
-              <TouchableOpacity onPress={() => setShowWithdrawModal(false)} className="w-8 h-8 items-center justify-center bg-slate-100 rounded-full">
-                <X size={18} color="#64748b" />
+            </View>
+            <View className="flex-row gap-2">
+              <TouchableOpacity className="w-10 h-10 bg-white rounded-full items-center justify-center border-2 border-slate-200">
+                <QrCode size={18} color="#0f172a" />
               </TouchableOpacity>
             </View>
+          </Animated.View>
 
-            <ScrollView className="px-6 py-6" showsVerticalScrollIndicator={false}>
-              <View className="bg-slate-50 p-5 rounded-[1.5rem] border border-slate-200 mb-6 flex-row justify-between items-center shadow-sm">
-                <Text className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Saldo Tersedia</Text>
-                <Text className="text-xl font-mono font-black text-slate-900 tracking-tight">Rp {balance.toLocaleString('id-ID')}</Text>
-              </View>
-
-              <View className="space-y-6 pb-20">
-                <View>
-                  <Text className="text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Nominal Penarikan (Rp)</Text>
-                  <View className="relative justify-center">
-                    <Text className="absolute left-4 text-slate-400 font-mono font-black text-xl z-10 top-5">Rp</Text>
-                    <Input 
-                      keyboardType="numeric"
-                      value={withdrawAmount}
-                      onChangeText={setWithdrawAmount}
-                      placeholder="0"
-                      className="pl-14 font-mono font-black text-2xl h-16 rounded-[1.5rem] bg-white border-slate-200"
-                    />
-                  </View>
-                  <Text className="text-[9px] text-slate-400 font-bold mt-2 uppercase tracking-widest pl-2">Minimal penarikan Rp 50.000</Text>
-                </View>
-
-                {partnerType === "FleetDriver" && vendorName ? (
-                  <View className="bg-red-50 border border-red-200 p-4 rounded-[1.25rem] flex-row gap-3">
-                    <AlertCircle size={20} color="#dc2626" />
-                    <Text className="flex-1 text-[10px] text-red-800 font-bold leading-relaxed">
-                      Anda terdaftar sebagai Sopir Vendor PT {vendorName}. Dana yang ditarik akan ditransfer ke rekening Perusahaan.
-                    </Text>
-                  </View>
-                ) : (
-                  <View>
-                    <View className="flex-row bg-slate-100 p-1 rounded-2xl mb-4">
-                      <TouchableOpacity 
-                        onPress={() => setWithdrawMethod("Manual_Bank")}
-                        className={`flex-1 py-2.5 rounded-xl flex-row items-center justify-center gap-2 ${withdrawMethod === "Manual_Bank" ? "bg-white shadow-sm" : ""}`}
-                      >
-                        <Building2 size={14} color={withdrawMethod === "Manual_Bank" ? "#0f172a" : "#64748b"} />
-                        <Text className={`text-xs font-bold ${withdrawMethod === "Manual_Bank" ? "text-slate-900" : "text-slate-500"}`}>Transfer Bank</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity 
-                        onPress={() => setWithdrawMethod("DANA_API")}
-                        className={`flex-1 py-2.5 rounded-xl flex-row items-center justify-center gap-2 ${withdrawMethod === "DANA_API" ? "bg-blue-50 border border-blue-100 shadow-sm" : ""}`}
-                      >
-                        <Smartphone size={14} color={withdrawMethod === "DANA_API" ? "#1d4ed8" : "#64748b"} />
-                        <Text className={`text-xs font-bold ${withdrawMethod === "DANA_API" ? "text-blue-700" : "text-slate-500"}`}>Saldo DANA</Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    {withdrawMethod === "Manual_Bank" ? (
-                      <View className="space-y-4">
-                        <View>
-                          <Text className="text-[10px] font-black text-slate-500 mb-1.5 uppercase tracking-widest">Nama Bank</Text>
-                          <Input placeholder="Cth: BCA / Mandiri / BNI" value={wdBankName} onChangeText={setWdBankName} className="bg-white rounded-xl" />
-                        </View>
-                        <View>
-                          <Text className="text-[10px] font-black text-slate-500 mb-1.5 uppercase tracking-widest">Nomor Rekening</Text>
-                          <Input keyboardType="numeric" placeholder="Cth: 1234567890" value={wdAccountNumber} onChangeText={setWdAccountNumber} className="bg-white rounded-xl font-mono font-bold tracking-widest" />
-                        </View>
-                        <View>
-                          <Text className="text-[10px] font-black text-slate-500 mb-1.5 uppercase tracking-widest">Atas Nama</Text>
-                          <Input placeholder="Cth: Budi Santoso" value={wdAccountName} onChangeText={(text) => setWdAccountName(text.toUpperCase())} className="bg-white rounded-xl uppercase" />
-                        </View>
-                      </View>
-                    ) : (
-                      <View className="bg-blue-50/50 p-4 rounded-xl border border-blue-100/50">
-                        <View className="flex-row items-center gap-1.5 mb-2">
-                          <Smartphone size={14} color="#1e40af" />
-                          <Text className="text-[10px] font-black text-blue-800 uppercase tracking-widest">Nomor HP DANA</Text>
-                        </View>
-                        <Input keyboardType="numeric" placeholder="Cth: 08123456789" value={wdAccountNumber} onChangeText={setWdAccountNumber} className="bg-white rounded-xl font-mono font-black text-lg tracking-widest text-blue-900 border-blue-200" />
-                        <Text className="text-[9px] text-blue-600/70 font-bold mt-2 leading-relaxed">Dana akan ditransfer otomatis ke akun DANA Anda setelah disetujui.</Text>
-                      </View>
-                    )}
-                  </View>
-                )}
-              </View>
-            </ScrollView>
-
-            <View className="p-6 bg-white border-t border-slate-100 pb-8 shrink-0">
-              <Button 
-                variant="primary"
-                size="lg"
-                onPress={handleWithdrawRequest}
-                disabled={isProcessing || !withdrawAmount || Number(withdrawAmount) > balance}
-                className={`w-full h-14 ${isVendor ? 'bg-blue-600' : 'bg-[#7a171d]'}`}
-              >
-                {isProcessing ? <ActivityIndicator size="small" color="#fff" /> : <Text className="text-white font-bold text-sm">Ajukan Penarikan Dana</Text>}
-              </Button>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* TOPUP MODAL */}
-      <Modal visible={showTopupModal} animationType="slide" transparent={true}>
-        <View className="flex-1 justify-end bg-slate-900/60">
-          <View className="bg-white rounded-t-[2.5rem] w-full max-h-[90vh]">
-            <View className="w-full items-center pt-3 pb-1">
-              <View className="w-12 h-1.5 bg-slate-300 rounded-full" />
-            </View>
-
-            <View className="px-6 py-4 flex-row items-center justify-between border-b border-slate-100">
-              <View>
-                <View className="flex-row items-center gap-2">
-                  <ArrowUpCircle size={20} color="#C5A059" />
-                  <Text className="text-xl font-black text-slate-900 tracking-tight">Isi Saldo (Top-Up)</Text>
-                </View>
-                <Text className="text-[10px] font-bold text-slate-400 mt-0.5 uppercase tracking-widest">Deposit untuk Order COD</Text>
-              </View>
-              <TouchableOpacity onPress={() => setShowTopupModal(false)} className="w-8 h-8 items-center justify-center bg-slate-100 rounded-full">
-                <X size={18} color="#64748b" />
-              </TouchableOpacity>
-            </View>
-
-            <ScrollView className="px-6 py-6" showsVerticalScrollIndicator={false}>
+          {/* Premium Physical Card */}
+          <Animated.View 
+            entering={FadeInDown.duration(600).delay(100).springify()}
+            className="rounded-[2rem] overflow-hidden"
+          >
+            {/* 3D Depth Layer */}
+            <View className="absolute inset-0 bg-[#450a0a] rounded-[2rem] top-2 left-0 right-0 bottom-[-8px]" />
+            
+            <View className="rounded-[2rem] overflow-hidden bg-[#7a171d] border-2 border-[#450a0a] relative p-6">
+              <LinearGradient
+                colors={isVendor ? ['#1e3a8a', '#1e40af'] : ['#9A242B', '#7a171d']}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                className="absolute inset-0"
+              />
+              {/* Graphic Elements */}
+              <View className="absolute -right-8 -top-8 w-40 h-40 bg-white/5 rounded-full" />
+              <View className="absolute -left-12 -bottom-12 w-48 h-48 bg-black/10 rounded-full" />
               
-              {/* PAYMENT CONFIGURATIONS */}
-              <View className="space-y-4 mb-6">
-                {paymentConfig?.qrisImageUrl && (
-                  <View className="bg-slate-50 border border-slate-200 rounded-[1.5rem] p-5 items-center">
-                    <View className="flex-row items-center gap-2 mb-3">
-                      <QrCode size={16} color="#7a171d" />
-                      <Text className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Scan QRIS (Otomatis)</Text>
+              <View className="relative z-10">
+                <View className="flex-row items-center justify-between mb-6">
+                  <View className="flex-row items-center gap-2 bg-black/20 px-3.5 py-1.5 rounded-xl border border-white/10">
+                    <Wallet size={14} color="#FACC15" />
+                    <Text className="text-[10px] font-black text-yellow-400 uppercase tracking-widest">FlashPay</Text>
+                  </View>
+                  {/* EMV Chip placeholder */}
+                  <View className="w-10 h-7 bg-yellow-400/80 rounded-md border border-yellow-200/50" />
+                </View>
+
+                <Text className="text-[10px] font-bold text-red-100 uppercase tracking-widest mb-0.5">Total Saldo Aktif</Text>
+                <View className="flex-row items-start gap-2 mb-4">
+                  <Text className="text-xl font-bold text-red-200 mt-2">Rp</Text>
+                  <Text className="text-4xl font-black text-white tracking-tighter">{balance.toLocaleString('id-ID')}</Text>
+                </View>
+
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-[11px] font-mono font-bold text-white/50 tracking-widest">**** **** **** 1945</Text>
+                  {partnerType === "FleetDriver" && vendorName && (
+                    <View className="flex-row items-center gap-1.5 bg-white/10 px-2 py-1 rounded border border-white/20">
+                      <ShieldAlert size={12} color="#fcd34d" />
+                      <Text className="text-[9px] font-black text-amber-300 tracking-wider uppercase">PT {vendorName}</Text>
                     </View>
-                    <Image source={{ uri: paymentConfig.qrisImageUrl }} style={{ width: 200, height: 200, borderRadius: 20 }} contentFit="contain" className="bg-white border-2 border-white shadow-sm p-2" />
-                  </View>
-                )}
-
-                {paymentConfig?.transferBank && paymentConfig.transferBank.length > 0 && (
-                  <View className="space-y-3">
-                    <Text className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Transfer Bank Manual</Text>
-                    {paymentConfig.transferBank.map((bank, idx) => (
-                      <View key={idx} className="bg-white border border-slate-200 rounded-[1.25rem] p-4 flex-row items-center justify-between shadow-sm mb-2">
-                        <View className="flex-row items-center gap-3.5">
-                          <View className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 items-center justify-center">
-                            <Building2 size={20} color="#2563eb" />
-                          </View>
-                          <View>
-                            <Text className="text-xs font-black text-slate-800 tracking-tight">{bank.bankName}</Text>
-                            <Text className="text-sm font-mono font-black text-slate-600 my-0.5 tracking-tight">{bank.accountNumber}</Text>
-                            <Text className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">A.N: {bank.accountName}</Text>
-                          </View>
-                        </View>
-                        <TouchableOpacity 
-                          onPress={async () => {
-                            await Clipboard.setStringAsync(bank.accountNumber);
-                            Alert.alert("Tersalin", "Nomor rekening berhasil disalin.");
-                          }}
-                          className="p-2.5 bg-slate-50 border border-slate-200 rounded-[1rem]"
-                        >
-                          <Copy size={16} color="#64748b" />
-                        </TouchableOpacity>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-
-              {/* FORM TOPUP */}
-              <View className="space-y-6 pb-20 border-t border-slate-100 pt-6">
-                <View>
-                  <Text className="text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Masukkan Nominal Transfer (Rp)</Text>
-                  <Input 
-                    keyboardType="numeric"
-                    value={topupAmount}
-                    onChangeText={setTopupAmount}
-                    placeholder="0"
-                    className="w-full text-2xl font-black font-mono text-center h-16 rounded-[1.5rem] bg-white focus-visible:border-[#C5A059]"
-                  />
-                  <Text className="text-[9px] text-amber-600 font-bold mt-2 text-center uppercase tracking-widest bg-amber-50 py-1.5 rounded-lg border border-amber-100">Minimal Top-Up Rp 20.000</Text>
-                </View>
-
-                <View>
-                  <Text className="text-[10px] font-black text-slate-500 mb-2 uppercase tracking-widest">Upload Bukti Transfer</Text>
-                  <TouchableOpacity 
-                    onPress={handlePickTopupImage}
-                    activeOpacity={0.8}
-                    className={`border-2 rounded-[1.5rem] min-h-[160px] items-center justify-center overflow-hidden ${topupImageUri ? 'border-[#C5A059]' : 'border-slate-200 border-dashed bg-slate-50'}`}
-                  >
-                    {topupImageUri ? (
-                      <Image source={{ uri: topupImageUri }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
-                    ) : (
-                      <View className="items-center">
-                        <View className="w-12 h-12 bg-white rounded-full items-center justify-center border border-slate-200 shadow-sm mb-2">
-                          <Upload size={20} color="#94a3b8" />
-                        </View>
-                        <Text className="text-xs font-black text-slate-600 tracking-tight">Ketuk untuk pilih foto bukti</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
+                  )}
                 </View>
               </View>
-            </ScrollView>
-
-            <View className="p-6 bg-white border-t border-slate-100 pb-8 shrink-0">
-              <TouchableOpacity 
-                onPress={handleTopupSubmit}
-                disabled={isProcessing || !topupImageUri || !topupAmount}
-                activeOpacity={0.8}
-                className="w-full h-14 rounded-[1.5rem] items-center justify-center overflow-hidden shadow-lg shadow-[#C5A059]/30"
-              >
-                <LinearGradient colors={['#DFBE7B', '#C5A059']} className="absolute inset-0" />
-                {isProcessing ? <ActivityIndicator size="small" color="#fff" /> : <Text className="text-white font-bold text-sm z-10">Kirim Pengajuan Saldo</Text>}
-              </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </View>
-      </Modal>
+
+        {/* 2. MAIN MENU GRID (Like DANA) */}
+        <Animated.View 
+          entering={FadeInDown.duration(600).delay(200).springify()}
+          className="px-5 mb-8"
+        >
+          <Text className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-1">Layanan Utama</Text>
+          
+          <View className="bg-white rounded-[2rem] p-4 border-2 border-slate-200 flex-row flex-wrap justify-between shadow-sm" style={{ shadowColor: '#94a3b8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8 }}>
+            
+            <TouchableOpacity onPress={() => router.push("/wallet/withdraw")} activeOpacity={0.7} className="w-[22%] items-center mb-2">
+              <View className="w-12 h-12 bg-red-50 rounded-2xl items-center justify-center border border-red-100 mb-2">
+                <ArrowDownCircle size={22} color="#7a171d" />
+              </View>
+              <Text className="text-[9px] font-black text-slate-700 text-center tracking-tight">Tarik Saldo</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={() => router.push("/wallet/topup")} activeOpacity={0.7} className="w-[22%] items-center mb-2">
+              <View className="w-12 h-12 bg-amber-50 rounded-2xl items-center justify-center border border-amber-100 mb-2">
+                <ArrowUpCircle size={22} color="#d97706" />
+              </View>
+              <Text className="text-[9px] font-black text-slate-700 text-center tracking-tight">Top-Up</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => Alert.alert("Segera Hadir", "Fitur Transfer antar driver segera hadir.")} activeOpacity={0.7} className="w-[22%] items-center mb-2">
+              <View className="w-12 h-12 bg-blue-50 rounded-2xl items-center justify-center border border-blue-100 mb-2">
+                <Building2 size={22} color="#2563eb" />
+              </View>
+              <Text className="text-[9px] font-black text-slate-700 text-center tracking-tight">Transfer</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => Alert.alert("Segera Hadir", "Fitur Mutasi lengkap segera hadir.")} activeOpacity={0.7} className="w-[22%] items-center mb-2">
+              <View className="w-12 h-12 bg-slate-50 rounded-2xl items-center justify-center border border-slate-200 mb-2">
+                <Banknote size={22} color="#475569" />
+              </View>
+              <Text className="text-[9px] font-black text-slate-700 text-center tracking-tight">Mutasi</Text>
+            </TouchableOpacity>
+
+          </View>
+        </Animated.View>
+
+        {/* 3. PROMO BANNERS SECTION */}
+        <Animated.View 
+          entering={FadeInDown.duration(600).delay(300).springify()}
+          className="mb-8"
+        >
+          <View className="px-5 mb-3 flex-row justify-between items-end">
+            <Text className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Info & Promo</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} className="px-5" snapToInterval={width * 0.85 + 16} decelerationRate="fast">
+            <View style={{ width: width * 0.85 }} className="bg-[#7a171d] rounded-[1.5rem] p-5 mr-4 border border-[#450a0a] overflow-hidden relative">
+              <LinearGradient colors={['#9A242B', '#7a171d']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} className="absolute inset-0" />
+              <View className="relative z-10 w-2/3">
+                <View className="bg-white/20 px-2 py-1 rounded-md mb-2 self-start"><Text className="text-[8px] font-black text-white uppercase">Info Driver</Text></View>
+                <Text className="text-sm font-black text-white leading-tight mb-2">Tarik saldo di hari kerja diproses lebih cepat!</Text>
+                <Text className="text-[9px] text-red-100 font-bold">Pastikan data bank valid.</Text>
+              </View>
+            </View>
+            <View style={{ width: width * 0.85 }} className="bg-blue-600 rounded-[1.5rem] p-5 mr-10 border border-blue-800 overflow-hidden relative">
+              <LinearGradient colors={['#3b82f6', '#1d4ed8']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} className="absolute inset-0" />
+              <View className="relative z-10 w-2/3">
+                <View className="bg-white/20 px-2 py-1 rounded-md mb-2 self-start"><Text className="text-[8px] font-black text-white uppercase">Tips Keamanan</Text></View>
+                <Text className="text-sm font-black text-white leading-tight mb-2">Waspada Penipuan Mengatasnamakan Flash Global!</Text>
+                <Text className="text-[9px] text-blue-100 font-bold">Jaga kerahasiaan OTP.</Text>
+              </View>
+            </View>
+          </ScrollView>
+        </Animated.View>
+
+        {/* 4. TRANSACTION HISTORY */}
+        <Animated.View entering={FadeInDown.duration(600).delay(400)} className="px-5">
+          <View className="flex-row items-center justify-between mb-4">
+            <Text className="text-[11px] font-black text-slate-500 uppercase tracking-widest ml-1">Aktivitas Terakhir</Text>
+            <TouchableOpacity>
+              <Text className="text-[10px] font-black text-[#7a171d] uppercase tracking-widest">Lihat Semua</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View className="space-y-3">
+            {historyLogs.length === 0 ? (
+              <View className="bg-white border-2 border-slate-200 border-dashed rounded-[2rem] p-8 items-center">
+                <View className="w-16 h-16 bg-slate-100 rounded-[1.25rem] items-center justify-center mb-4">
+                  <Banknote size={32} color="#cbd5e1" />
+                </View>
+                <Text className="text-sm font-black text-slate-800 tracking-tight mb-1">Brankas Kosong</Text>
+                <Text className="text-xs font-bold text-slate-400 text-center">Belum ada riwayat transaksi.</Text>
+              </View>
+            ) : (
+              historyLogs.slice(0, 10).map((log, index) => {
+                const millis = getSafeMillis(log.timestamp);
+                const dateStr = millis > 0 ? new Date(millis).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "Baru saja";
+                const isIncome = log.type === "TopUp" || log.type === "Income";
+
+                return (
+                  <View 
+                    key={log.id} 
+                    className="bg-white p-4 rounded-2xl border-2 border-slate-100 flex-row items-center justify-between"
+                  >
+                    <View className="flex-1 pr-2 flex-row items-center gap-3">
+                      <View className={`w-12 h-12 rounded-2xl items-center justify-center shrink-0 border-2 ${isIncome ? 'bg-emerald-50 border-emerald-100' : 'bg-red-50 border-red-100'}`}>
+                         {isIncome ? <ArrowUpCircle size={22} color="#10b981" /> : <ArrowDownCircle size={22} color="#ef4444" />}
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-sm font-black text-slate-800 tracking-tight leading-snug mb-1" numberOfLines={1}>
+                          {log.description || (isIncome ? 'Pendapatan Saldo' : 'Potongan Saldo')}
+                        </Text>
+                        <Text className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{dateStr}</Text>
+                      </View>
+                    </View>
+                    
+                    <View className="items-end gap-1.5 shrink-0">
+                      <Text className={`text-sm font-black tracking-tighter ${isIncome ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {isIncome ? '+' : '-'} {formatRupiah(log.amount)}
+                      </Text>
+                      <View className={`px-2 py-1 rounded-lg ${getStatusBadgeColor(log.status)}`}>
+                        <Text className={`text-[9px] font-black uppercase tracking-wider ${getStatusTextColor(log.status)}`}>
+                          {log.status === "Pending" ? "Menunggu" : log.status === "Processing" ? "Proses" : log.status === "Success" ? "Berhasil" : log.status}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })
+            )}
+          </View>
+        </Animated.View>
+      </ScrollView>
 
     </View>
   );
